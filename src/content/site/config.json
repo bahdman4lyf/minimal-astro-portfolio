@@ -1,6 +1,6 @@
 {
   "home": {
-    "name": "ByteKai",
+    "name": "Nathan",
     "title": "Software Engineer & Curious Tinkerer",
     "introduction": "I’m constantly learning and evolving. I love diving into new ideas and finding creative ways to solve problems.",
     "sections": {
@@ -20,11 +20,11 @@
     "socialLinks": [
       {
         "platform": "GitHub",
-        "url": "https://github.com/bytekai"
+        "url": "https://github.com/bahdman4lyf"
       },
       {
         "platform": "Twitter",
-        "url": "https://x.com/byteekai"
+        "url": "https://x.com/bahdman4lyf"
       }
     ]
   }

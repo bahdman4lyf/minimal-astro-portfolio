@@ -13,7 +13,9 @@ import { formatDate } from "../../utils/date";
 
 <article>
   <div class="title-row">
-    <a href={url}>{title}</a>
+    <a href={url} title={title}>
+      {title}
+    </a>
     {date && <time datetime={date.toISOString()}>{formatDate(date)}</time>}
   </div>
   <p class="muted-text">{description}</p>
@@ -40,6 +42,15 @@ import { formatDate } from "../../utils/date";
     font-size: var(--text-lg);
     text-decoration: none;
     color: var(--text-color);
+    /* Keep long titles on one line instead of wrapping and pushing the date down */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .title-row time {
+    flex-shrink: 0;
   }
 
   .title-row a:hover {

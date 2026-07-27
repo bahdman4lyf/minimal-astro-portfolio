@@ -5,6 +5,8 @@ import type { CollectionEntry } from "astro:content";
 import BaseLayout from "../components/layout/BaseLayout.astro";
 import ContentList from "../components/shared/ContentList.astro";
 import Container from "../components/ui/Container.astro";
+// `?url` makes Vite emit the file as a build asset and hand back its public path.
+import resumeUrl from "../assets/docs/Nathaniel Joseph - Frontend- CV.docx?url";
 
 const siteConfig = await getEntry("site", "home");
 if (!siteConfig) {
@@ -21,6 +23,14 @@ const formatDate = (date: Date | undefined) => {
   });
 };
 
+const formatMonthYear = (date: Date | undefined) => {
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+};
+
 const posts = await getCollection("blog", ({ data }: CollectionEntry<"blog">) => {
   return import.meta.env.PROD ? !data.draft : true;
 });
@@ -32,10 +42,14 @@ const latestPosts = posts
   .slice(0, 3);
 
 const experiences = await getCollection("experience");
-const sortedExperiences = experiences.sort(
-  (a: CollectionEntry<"experience">, b: CollectionEntry<"experience">) =>
-    b.data.startDate.getTime() - a.data.startDate.getTime()
-);
+// Current roles first, then most recently started. Several roles share a start
+// month, so fall back to end date to keep the order stable.
+const sortedExperiences = experiences.sort((a: CollectionEntry<"experience">, b: CollectionEntry<"experience">) => {
+  if (a.data.current !== b.data.current) return a.data.current ? -1 : 1;
+  const byStart = b.data.startDate.getTime() - a.data.startDate.getTime();
+  if (byStart !== 0) return byStart;
+  return (b.data.endDate?.getTime() ?? 0) - (a.data.endDate?.getTime() ?? 0);
+});
 
 const projects = await getCollection("projects");
 const featuredProjects = projects.filter((project: CollectionEntry<"projects">) => project.data.featured).slice(0, 3);
@@ -85,7 +99,7 @@ const featuredProjects = projects.filter((project: CollectionEntry<"projects">) 
     <section class="section">
       <div class="section-header">
         <h2>{site.sections.projects.title}</h2>
-        <a href="/projects">{site.sections.projects.viewAllText}</a>
+        <!-- <a href="/projects">{site.sections.projects.viewAllText}</a> -->
       </div>
       <ContentList>
         {
@@ -113,11 +127,13 @@ const featuredProjects = projects.filter((project: CollectionEntry<"projects">) 
     <section class="section">
       <div class="section-header">
         <h2>{site.sections.experience.title}</h2>
-        <a href="/experience">{site.sections.experience.viewAllText}</a>
+        <a href={resumeUrl} download="Nathaniel Joseph - Frontend Developer CV.docx">
+          {site.sections.experience.viewAllText}
+        </a>
       </div>
       <div class="content-list">
         {
-          sortedExperiences.slice(0, 2).map((exp) => (
+          sortedExperiences.slice(0, 5).map((exp) => (
             <article>
               <div class="title-row">
                 <div class="company-info">
@@ -125,7 +141,8 @@ const featuredProjects = projects.filter((project: CollectionEntry<"projects">) 
                   <span>{exp.data.title}</span>
                 </div>
                 <time>
-                  {formatDate(exp.data.startDate)} - {exp.data.current ? "Present" : formatDate(exp.data.endDate)}
+                  {formatMonthYear(exp.data.startDate)} -{" "}
+                  {exp.data.current ? "Present" : formatMonthYear(exp.data.endDate)}
                 </time>
               </div>
               <p class="muted-text">{exp.data.description}</p>

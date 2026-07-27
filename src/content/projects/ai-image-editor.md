@@ -1,7 +1,7 @@
 ---
-title: "AI Image Editor Pro"
-description: "An AI-powered image editing tool that allows users to edit photos using natural language commands. Built with React, Python, and integrated with various AI models for intelligent image manipulation."
-url: "https://ai-image-editor-pro.vercel.app"
+title: "Couples Coloring Mobile App"
+description: "A couples' app that turns photos into paintable line art for two partners to color together in real time. Built the Expo/React Native mobile app (collaborative canvas, palette system) with Supabase sync and Zustand state."
+url: "https://apps.apple.com/gb/app/lovla-couples-coloring-games/id6758548454"
 featured: true
-techs: ["React", "Python", "TensorFlow", "FastAPI", "Docker"]
---- 
+techs: ["React Native", "Expo", "Supabase", "Nativewind"]
+---

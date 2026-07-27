@@ -1,7 +1,7 @@
 ---
-title: "DevFlow - Developer Q&A Platform"
-description: "A modern Stack Overflow alternative built with Next.js 13, TypeScript, and MongoDB. Features real-time updates, AI-powered answer suggestions, and a responsive design."
-url: "https://devflow-demo.vercel.app"
+title: "Productivity and Social Accountablity Mobile App"
+description: "AI note-taking app (speech transcription, social streaks) built on a single React Native/Expo codebase for iOS and Android. Built and maintained the app working directly with the founder. Live on iOS under Benekan Technologies."
+url: "https://apps.apple.com/ng/app/9lives-social-productivity/id6752275333"
 featured: true
-techs: ["Next.js", "TypeScript", "MongoDB", "TailwindCSS", "OpenAI"]
---- 
+techs: ["React Native", "TypeScript", "Supabase", "Nativewind", "Groq"]
+---

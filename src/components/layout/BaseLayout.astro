@@ -13,6 +13,7 @@ import interRegularWoff2 from "@fontsource/inter/files/inter-latin-400-normal.wo
 import interMediumWoff2 from "@fontsource/inter/files/inter-latin-500-normal.woff2?url";
 import robotoMonoRegularWoff2 from "@fontsource/roboto-mono/files/roboto-mono-latin-400-normal.woff2?url";
 import { ClientRouter } from "astro:transitions";
+import { getEntry } from "astro:content";
 import Navigation from "../shared/Navigation.astro";
 import Background from "./Background.astro";
 
@@ -21,14 +22,21 @@ interface Props {
   description: string;
   image?: string;
   canonicalURL?: string;
+  siteName?: string;
 }
 
-const { title, description, image = "/images/og-image.jpg", canonicalURL = Astro.url } = Astro.props;
+const { title, description, image = "/images/og-image.jpg", canonicalURL = Astro.url, siteName } = Astro.props;
 
 // Crawlers require an absolute og:image URL. `Astro.site` is only defined once
 // `site` is set in astro.config.ts — until then fall back to the relative path,
 // because resolving against Astro.url would bake in a localhost origin at build.
 const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
+
+// og:site_name is the brand behind every page, so it comes from the site config
+// rather than the per-page title. Falls back to the hostname if the config is
+// ever missing, since an empty value would be worse than none.
+const brand = await getEntry("site", "home");
+const ogSiteName = siteName ?? brand?.data.name ?? Astro.site?.hostname ?? "Portfolio";
 ---
 
 <!doctype html>
@@ -48,6 +56,7 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
     <link rel="canonical" href={canonicalURL} />
 
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={ogSiteName} />
     <meta property="og:url" content={Astro.url} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content";
 import type { GetStaticPaths } from "astro";
 import BaseLayout from "../../components/layout/BaseLayout.astro";
+import Container from "../../components/ui/Container.astro";
 
 export const getStaticPaths = (async () => {
   const posts = await getCollection("blog");
@@ -24,27 +25,25 @@ const formatDate = (date: Date) => {
 ---
 
 <BaseLayout title={post.data.title} description={post.data.description}>
-  <article class="post">
-    <header>
-      <h1>{post.data.title}</h1>
-      <time datetime={post.data.publishedAt.toISOString()}>
-        {formatDate(post.data.publishedAt)}
-      </time>
-    </header>
-    <div class="content">
-      <Content />
-    </div>
-  </article>
+  <Container>
+    <article class="post">
+      <header>
+        <h1>{post.data.title}</h1>
+        <time datetime={post.data.publishedAt.toISOString()}>
+          {formatDate(post.data.publishedAt)}
+        </time>
+      </header>
+      <div class="content">
+        <Content />
+      </div>
+    </article>
+  </Container>
 </BaseLayout>
 
 <style>
-  main {
-    width: 100%;
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-  }
-
+  /* Width and gutters come from <main> in global.css plus <Container>. The
+     `main` rules that used to live here never applied: <main> is rendered by
+     BaseLayout, so Astro's scoping meant the selector matched nothing. */
   .post {
     margin-top: 2rem;
   }
@@ -124,9 +123,8 @@ const formatDate = (date: Date) => {
     margin: 0.5rem 0;
   }
 
-  @media (max-width: 640px) {
-    main {
-      padding: 1rem;
-    }
+  /* Code blocks scroll inside their own box rather than widening the page. */
+  .content :global(pre) {
+    max-width: 100%;
   }
 </style>

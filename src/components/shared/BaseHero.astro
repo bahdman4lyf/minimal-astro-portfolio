@@ -8,8 +8,8 @@ const { title, description } = Astro.props;
 ---
 
 <section class="hero">
-  <h1>{title}</h1>
-  <p class="subtitle">{description}</p>
+  <h1 data-reveal>{title}</h1>
+  <p class="subtitle" data-reveal style="--reveal-delay: 70ms">{description}</p>
 </section>
 
 <style>

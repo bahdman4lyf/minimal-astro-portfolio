@@ -1,6 +1,5 @@
 ---
-title: "Frontend Developer at Evoolv"
-logo: "/images/companies/evoolv.svg"
+title: "Frontend Engineer at Evoolv"
 description: "Established UI/UX engineering standards and a reusable component library, built API integration layers for third-party services, and implemented state management and CI/CD workflows to keep the codebase type-safe through a fast-iteration phase."
 startDate: "2025-11-01"
 endDate: "2026-02-28"

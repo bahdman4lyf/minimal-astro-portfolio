@@ -1,9 +1,8 @@
 ---
-title: "Frontend Developer at BrandDrive"
-logo: "/images/companies/branddrive.svg"
+title: "Frontend Engineer at BrandDrive"
 description: "Built robust form handling with React Hook Form, delivered high-fidelity UI from Figma prototypes, and shipped interactive dashboards, modals, and dynamic filtering with Material UI, Zustand, and TypeScript."
 startDate: "2024-10-01"
-endDate: "2025-03-31"
+endDate: "2025-05-31"
 ---
 
 - Built robust form handling with React Hook Form, reducing form-related bugs.

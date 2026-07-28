@@ -7,4 +7,19 @@
     flex-direction: column;
     gap: 1rem;
   }
+
+  /* Default cascade for any revealed child, so lists stagger without each page
+     having to compute delays. An inline --reveal-delay still overrides this. */
+  .content-list > :nth-child(2) {
+    --reveal-delay: 70ms;
+  }
+  .content-list > :nth-child(3) {
+    --reveal-delay: 140ms;
+  }
+  .content-list > :nth-child(4) {
+    --reveal-delay: 210ms;
+  }
+  .content-list > :nth-child(n + 5) {
+    --reveal-delay: 280ms;
+  }
 </style>

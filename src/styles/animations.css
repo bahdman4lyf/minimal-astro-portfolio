@@ -57,6 +57,32 @@
   animation-delay: 200ms;
 }
 
+/* Scroll Reveal
+   The hidden start state is scoped to `.js` (set by an inline script in the
+   <head>) so that with JS unavailable the content simply renders as normal
+   rather than staying invisible forever. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.js [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Never trade motion for legibility: if motion is unwelcome, skip the
+   animation entirely instead of relying on the observer to un-hide things. */
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* Interactive Animations */
 @media (prefers-reduced-motion: no-preference) {
   /* Hover transitions */

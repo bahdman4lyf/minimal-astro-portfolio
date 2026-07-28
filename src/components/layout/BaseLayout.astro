@@ -14,6 +14,7 @@ import interMediumWoff2 from "@fontsource/inter/files/inter-latin-500-normal.wof
 import robotoMonoRegularWoff2 from "@fontsource/roboto-mono/files/roboto-mono-latin-400-normal.woff2?url";
 import { ClientRouter } from "astro:transitions";
 import Navigation from "../shared/Navigation.astro";
+import Background from "./Background.astro";
 
 interface Props {
   title: string;
@@ -53,12 +54,18 @@ const { title, description, image = "/default-og-image.jpg", canonicalURL = Astr
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={image} />
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
     <ClientRouter />
     <script is:inline>
       // Always use dark theme
       document.documentElement.setAttribute("data-theme", "dark");
+
+      // Marks JS as available so scroll-reveal can hide its targets. Set here,
+      // before first paint, so revealed content never flashes in then out.
+      document.documentElement.classList.add("js");
 
       // Handle theme persistence during view transitions
       document.addEventListener("astro:before-swap", (ev) => {
@@ -77,6 +84,7 @@ const { title, description, image = "/default-og-image.jpg", canonicalURL = Astr
     </script>
   </head>
   <body>
+    <Background transition:persist />
     <div class="top-glow" transition:persist></div>
     <main>
       <div class="nav-container">
@@ -85,5 +93,84 @@ const { title, description, image = "/default-og-image.jpg", canonicalURL = Astr
       <main><slot /></main>
     </main>
     <div class="bottom-glow" transition:persist></div>
+
+    <script>
+      // Held at module scope on purpose. An IntersectionObserver whose only
+      // reference is a local variable can be garbage collected once the function
+      // returns — it then silently stops delivering entries, which strands every
+      // not-yet-revealed element at opacity 0 forever.
+      let observer = null;
+      let pending = [];
+      let lastSweep = 0;
+
+      const reveal = (el) => {
+        el.classList.add("is-revealed");
+        if (observer) observer.unobserve(el);
+      };
+
+      // Same test the observer makes, done by hand.
+      const isInView = (el) => el.getBoundingClientRect().top < window.innerHeight * 0.92;
+
+      // Backstop for the observer: a missed observer callback can never leave
+      // content invisible. Deliberately not driven by requestAnimationFrame —
+      // that ties it to the render loop, which is exactly what fails when the
+      // observer is already not delivering.
+      const sweep = () => {
+        pending = pending.filter((el) => {
+          if (el.classList.contains("is-revealed")) return false;
+          if (!isInView(el)) return true;
+          reveal(el);
+          return false;
+        });
+
+        if (!pending.length) {
+          window.removeEventListener("scroll", onScroll);
+          window.removeEventListener("resize", onScroll);
+        }
+      };
+
+      // Throttled to ~10/sec over a list that only shrinks, so the rect reads
+      // stay well inside a frame's budget.
+      const onScroll = () => {
+        const now = Date.now();
+        if (now - lastSweep < 100) return;
+        lastSweep = now;
+        sweep();
+      };
+
+      const revealTargets = () => {
+        const targets = [...document.querySelectorAll("[data-reveal]:not(.is-revealed)")];
+        if (!targets.length) return;
+
+        // No observer support (or reduced motion) — show everything at once.
+        if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          targets.forEach((el) => el.classList.add("is-revealed"));
+          return;
+        }
+
+        observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              // Reveal is one-way; `reveal` unobserves so scrolling stays cheap.
+              if (entry.isIntersecting) reveal(entry.target);
+            });
+          },
+          // Fire slightly before the element reaches the fold, and accept the
+          // thinnest sliver of visibility so short rows at the edge still count.
+          { rootMargin: "0px 0px -8% 0px", threshold: 0.01 },
+        );
+
+        targets.forEach((el) => observer.observe(el));
+
+        pending = targets;
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll, { passive: true });
+        // Catch anything already on screen, including a restored scroll position.
+        sweep();
+      };
+
+      // Fires on first load and after every view transition.
+      document.addEventListener("astro:page-load", revealTargets);
+    </script>
   </body>
 </html>

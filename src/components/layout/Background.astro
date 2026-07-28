@@ -1,0 +1,112 @@
+---
+// Ambient animated backdrop. Purely decorative and pointer-transparent, so it
+// sits behind everything and is invisible to assistive tech.
+// Only `transform` and `opacity` are animated — both compositor-only, so the
+// large blurred layers never trigger paint on every frame.
+---
+
+<div class="backdrop" aria-hidden="true">
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+  <div class="aurora aurora-3"></div>
+</div>
+
+<style>
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+    /* The blurs are expensive to repaint; isolate them from the rest of the page. */
+    contain: layout paint style;
+  }
+
+  .aurora {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.5;
+    will-change: transform;
+    /* Promote to its own layer so drifting never repaints the blur. */
+    transform: translateZ(0);
+  }
+
+  .aurora-1 {
+    top: -18vh;
+    left: -10vw;
+    width: 60vw;
+    height: 60vw;
+    max-width: 720px;
+    max-height: 720px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.5), transparent 68%);
+    animation: drift-1 26s ease-in-out infinite;
+  }
+
+  .aurora-2 {
+    top: 25vh;
+    right: -18vw;
+    width: 55vw;
+    height: 55vw;
+    max-width: 660px;
+    max-height: 660px;
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.38), transparent 68%);
+    animation: drift-2 32s ease-in-out infinite;
+  }
+
+  .aurora-3 {
+    bottom: -22vh;
+    left: 15vw;
+    width: 65vw;
+    height: 65vw;
+    max-width: 780px;
+    max-height: 780px;
+    background: radial-gradient(circle, rgba(123, 104, 238, 0.34), transparent 70%);
+    animation: drift-3 38s ease-in-out infinite;
+  }
+
+  @keyframes drift-1 {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(6vw, 5vh, 0) scale(1.12);
+    }
+  }
+
+  @keyframes drift-2 {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1.06);
+    }
+    50% {
+      transform: translate3d(-7vw, 8vh, 0) scale(0.94);
+    }
+  }
+
+  @keyframes drift-3 {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(0.96);
+    }
+    50% {
+      transform: translate3d(5vw, -6vh, 0) scale(1.1);
+    }
+  }
+
+  /* Tone the whole thing down on small screens — less area, cheaper blur. */
+  @media (max-width: 640px) {
+    .aurora {
+      filter: blur(60px);
+      opacity: 0.4;
+    }
+  }
+
+  /* Hold everything still, but keep the colour. */
+  @media (prefers-reduced-motion: reduce) {
+    .aurora {
+      animation: none;
+    }
+  }
+</style>

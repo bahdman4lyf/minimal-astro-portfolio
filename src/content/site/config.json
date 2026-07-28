@@ -1,8 +1,8 @@
 {
   "home": {
-    "name": "Nathan",
-    "title": "Software Engineer & Curious Tinkerer",
-    "introduction": "I’m constantly learning and evolving. I love diving into new ideas and finding creative ways to solve problems.",
+    "name": "Nathan ~ Alias: Blank",
+    "title": "Software Engineer — Mobile & Full-Stack Engineer",
+    "introduction": "I build mobile products end to end — React Native apps shipped to the App Store and Play Store, and the Nest.js services behind them. The work that decides whether a product feels good happens in the messy middle: real-time location, networks that drop, and the state bugs that only surface on a real device.",
     "sections": {
       "blog": {
         "title": "Writing",
@@ -15,7 +15,96 @@
       "experience": {
         "title": "Experience",
         "viewAllText": "View full résumé"
+      },
+      "skills": {
+        "title": "Skills & Tools"
+      },
+      "education": {
+        "title": "Education"
+      },
+      "certifications": {
+        "title": "Certifications"
+      },
+      "contact": {
+        "title": "Get in touch",
+        "description": "Open to frontend, mobile, and full-stack work. The fastest way to reach me is email."
       }
+    },
+    "skills": [
+      {
+        "category": "Languages",
+        "items": [
+          "JavaScript",
+          "TypeScript"
+        ]
+      },
+      {
+        "category": "Frontend",
+        "items": [
+          "React.js",
+          "Next.js",
+          "Vue",
+          "Nuxt",
+          "Zustand",
+          "Redux"
+        ]
+      },
+      {
+        "category": "Mobile",
+        "items": [
+          "React Native",
+          "Expo",
+          "Ionic"
+        ]
+      },
+      {
+        "category": "Backend",
+        "items": [
+          "Node.js",
+          "Nest.js",
+          "Express.js"
+        ]
+      },
+      {
+        "category": "Data",
+        "items": [
+          "PostgreSQL",
+          "MongoDB",
+          "MySQL",
+          "Supabase",
+          "Prisma"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "school": "MIVA Open University",
+        "credential": "BSc Computer Science",
+        "location": "Abuja, NG",
+        "startDate": "2025-09-01",
+        "current": true
+      },
+      {
+        "school": "National Institute of Information Technology (NIIT)",
+        "credential": "Diploma in Frontend Development",
+        "location": "Abuja, NG",
+        "startDate": "2023-02-01",
+        "endDate": "2024-09-30"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "HNG 11 Finalist",
+        "year": "2024"
+      },
+      {
+        "name": "Proficiency in Frontend Development",
+        "year": "2024"
+      }
+    ],
+    "contact": {
+      "email": "nathancodes05@gmail.com",
+      "location": "Nigeria — working remotely"
     },
     "socialLinks": [
       {

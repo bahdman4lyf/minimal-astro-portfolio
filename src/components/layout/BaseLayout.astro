@@ -7,14 +7,23 @@ import "@fontsource/inter/300.css";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/roboto-mono/400.css";
+import "@fontsource-variable/syne";
+import "@fontsource/instrument-serif";
+import "@fontsource/instrument-serif/400-italic.css";
+import "lenis/dist/lenis.css";
 
 import interLightWoff2 from "@fontsource/inter/files/inter-latin-300-normal.woff2?url";
 import interRegularWoff2 from "@fontsource/inter/files/inter-latin-400-normal.woff2?url";
 import interMediumWoff2 from "@fontsource/inter/files/inter-latin-500-normal.woff2?url";
 import robotoMonoRegularWoff2 from "@fontsource/roboto-mono/files/roboto-mono-latin-400-normal.woff2?url";
+import syneWoff2 from "@fontsource-variable/syne/files/syne-latin-wght-normal.woff2?url";
+import instrumentSerifItalicWoff2 from "@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2?url";
 import { ClientRouter } from "astro:transitions";
 import { getEntry } from "astro:content";
 import Navigation from "../shared/Navigation.astro";
+import CommandPalette from "../shared/CommandPalette.astro";
+import NowPlaying from "../shared/NowPlaying.astro";
+import Toast from "../shared/Toast.astro";
 import Background from "./Background.astro";
 
 interface Props {
@@ -23,9 +32,18 @@ interface Props {
   image?: string;
   canonicalURL?: string;
   siteName?: string;
+  /** Widens the content column — used by the landing page only. */
+  wide?: boolean;
 }
 
-const { title, description, image = "/images/og-image.jpg", canonicalURL = Astro.url, siteName } = Astro.props;
+const {
+  title,
+  description,
+  image = "/images/og-image.jpg",
+  canonicalURL = Astro.url,
+  siteName,
+  wide = false,
+} = Astro.props;
 
 // Crawlers require an absolute og:image URL. `Astro.site` is only defined once
 // `site` is set in astro.config.ts — until then fall back to the relative path,
@@ -36,7 +54,22 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 // rather than the per-page title. Falls back to the hostname if the config is
 // ever missing, since an empty value would be worse than none.
 const brand = await getEntry("site", "home");
-const ogSiteName = siteName ?? brand?.data.name ?? Astro.site?.hostname ?? "Portfolio";
+const ogSiteName = siteName ?? brand?.data.seoName ?? brand?.data.name ?? Astro.site?.hostname ?? "Portfolio";
+const pageTitle = title.includes(ogSiteName) ? title : `${title} | ${ogSiteName}`;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : canonicalURL;
+const personSchema = brand?.data.contact
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: ogSiteName,
+      url: Astro.site?.href,
+      jobTitle: brand.data.title,
+      description: brand.data.introduction,
+      email: `mailto:${brand.data.contact.email}`,
+      homeLocation: brand.data.contact.location ? { "@type": "Place", name: brand.data.contact.location } : undefined,
+      sameAs: brand.data.socialLinks?.map((link) => link.url),
+    }
+  : undefined;
 ---
 
 <!doctype html>
@@ -44,21 +77,29 @@ const ogSiteName = siteName ?? brand?.data.name ?? Astro.site?.hostname ?? "Port
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="theme-color" content="#111111" />
 
     <!-- Preload critical fonts -->
     <link rel="preload" href={interLightWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href={interRegularWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href={interMediumWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href={robotoMonoRegularWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href={syneWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href={instrumentSerifItalicWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
 
-    <link rel="canonical" href={canonicalURL} />
+    <link rel="canonical" href={canonical} />
+    <link rel="manifest" href="/site.webmanifest" />
+    <!-- Hero portrait is served live from GitHub. -->
+    <link rel="preconnect" href="https://avatars.githubusercontent.com" crossorigin />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={ogSiteName} />
-    <meta property="og:url" content={Astro.url} />
-    <meta property="og:title" content={title} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
     <!-- Declaring dimensions lets crawlers reserve the card before fetching. -->
@@ -67,14 +108,16 @@ const ogSiteName = siteName ?? brand?.data.name ?? Astro.site?.hostname ?? "Port
     <meta property="og:image:alt" content={`${title} — ${description}`} />
 
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={Astro.url} />
-    <meta property="twitter:title" content={title} />
+    <meta property="twitter:url" content={canonical} />
+    <meta property="twitter:title" content={pageTitle} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={ogImage} />
 
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    {personSchema && <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />}
     <meta name="generator" content={Astro.generator} />
     <ClientRouter />
     <script is:inline>
@@ -103,14 +146,45 @@ const ogSiteName = siteName ?? brand?.data.name ?? Astro.site?.hostname ?? "Port
   </head>
   <body>
     <Background transition:persist />
-    <div class="top-glow" transition:persist></div>
-    <main>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <div class:list={["site", { wide }]}>
       <div class="nav-container">
         <Navigation />
       </div>
       <main><slot /></main>
-    </main>
-    <div class="bottom-glow" transition:persist></div>
+    </div>
+    <CommandPalette transition:persist />
+    <NowPlaying transition:persist />
+    <Toast transition:persist />
+
+    <script>
+      import Lenis from "lenis";
+
+      // Smooth, inertial scrolling. Lenis drives the native scroll position, so
+      // sticky elements, anchors and CSS scroll-driven animations keep working.
+      // Skipped entirely for users who asked for reduced motion.
+      declare global {
+        interface Window {
+          lenis?: Lenis;
+        }
+      }
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 0.95, anchors: { offset: -88 } });
+        window.lenis = lenis;
+        const raf = (time: number) => {
+          lenis.raf(time);
+          requestAnimationFrame(raf);
+        };
+        requestAnimationFrame(raf);
+
+        // New page, new document height.
+        document.addEventListener("astro:page-load", () => lenis.resize());
+        // Freeze the page behind the palette without fighting Lenis's own scroll.
+        new MutationObserver(() => {
+          document.documentElement.classList.contains("palette-open") ? lenis.stop() : lenis.start();
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      }
+    </script>
 
     <script>
       // Held at module scope on purpose. An IntersectionObserver whose only
@@ -187,8 +261,97 @@ const ogSiteName = siteName ?? brand?.data.name ?? Astro.site?.hostname ?? "Port
         sweep();
       };
 
+      // Shared micro-interactions. All decorative; the page works without them.
+      const fine = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      // Spotlight — a radial highlight on glass cards that tracks the pointer.
+      // Coordinates are written as CSS variables; the gradient itself lives in CSS.
+      const initSpotlight = () => {
+        if (!fine()) return;
+        document.querySelectorAll("[data-spotlight]").forEach((card) => {
+          if (card.dataset.spotlightReady) return;
+          card.dataset.spotlightReady = "1";
+          card.addEventListener("pointermove", (e) => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+            card.style.setProperty("--my", `${e.clientY - rect.top}px`);
+          });
+        });
+      };
+
+      // Magnetic buttons — nudge toward the pointer, spring back on leave.
+      const initMagnetic = () => {
+        if (!fine() || reduced()) return;
+        document.querySelectorAll("[data-magnetic]").forEach((el) => {
+          if (el.dataset.magneticReady) return;
+          el.dataset.magneticReady = "1";
+          el.addEventListener("pointermove", (e) => {
+            const r = el.getBoundingClientRect();
+            const x = (e.clientX - r.left - r.width / 2) * 0.18;
+            const y = (e.clientY - r.top - r.height / 2) * 0.28;
+            el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+          });
+          el.addEventListener("pointerleave", () => {
+            el.style.transform = "";
+          });
+        });
+      };
+
+      // Copy-to-clipboard buttons announce through the shared toast.
+      const initCopy = () => {
+        document.querySelectorAll("[data-copy]").forEach((btn) => {
+          if (btn.dataset.copyReady) return;
+          btn.dataset.copyReady = "1";
+          btn.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(btn.dataset.copy ?? "");
+              window.dispatchEvent(new CustomEvent("toast", { detail: "Copied to clipboard" }));
+            } catch {
+              window.dispatchEvent(new CustomEvent("toast", { detail: "Couldn't copy — select it instead" }));
+            }
+          });
+        });
+      };
+
+      // Nav firms up once the page has scrolled past the top.
+      const syncScrolled = () => {
+        document.documentElement.classList.toggle("scrolled", window.scrollY > 24);
+      };
+      window.addEventListener("scroll", syncScrolled, { passive: true });
+
       // Fires on first load and after every view transition.
-      document.addEventListener("astro:page-load", revealTargets);
+      document.addEventListener("astro:page-load", () => {
+        revealTargets();
+        syncScrolled();
+        initSpotlight();
+        initMagnetic();
+        initCopy();
+      });
     </script>
+
+    <style>
+      /* Thin read-position bar. Driven by the scroll timeline where supported,
+         and simply absent elsewhere — it is decoration, not navigation. */
+      .scroll-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        z-index: 60;
+        background: var(--accent);
+        transform-origin: left;
+        transform: scaleX(0);
+        pointer-events: none;
+      }
+
+      @supports (animation-timeline: scroll()) {
+        .scroll-progress {
+          animation: grow-x linear both;
+          animation-timeline: scroll(root);
+        }
+      }
+    </style>
   </body>
 </html>

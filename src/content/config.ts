@@ -55,15 +55,48 @@ const site = defineCollection({
   loader: file("./src/content/site/config.json"),
   schema: z.object({
     name: z.string(),
+    /** Formal name for search, social cards, and structured data. */
+    seoName: z.string().optional(),
     title: z.string(),
     introduction: z.string(),
+    /** Hero headline. Wrap one phrase in *asterisks* to render it as the italic accent. */
+    headline: z.string().optional(),
+    availability: z.string().optional(),
+    /** Extra hero figures. "Years shipping" is derived from experience and always shown first. */
+    stats: z
+      .array(
+        z.object({
+          value: z.number(),
+          suffix: z.string().optional(),
+          label: z.string(),
+        }),
+      )
+      .optional(),
+    services: z
+      .array(
+        z.object({
+          title: z.string(),
+          description: z.string(),
+          tags: z.array(z.string()).optional(),
+        }),
+      )
+      .optional(),
+    principles: z
+      .array(
+        z.object({
+          title: z.string(),
+          description: z.string(),
+        }),
+      )
+      .optional(),
     sections: z.object({
       blog: linkedSection,
       projects: linkedSection,
       experience: linkedSection,
+      services: plainSection.optional(),
+      principles: plainSection.optional(),
       skills: plainSection.optional(),
-      education: plainSection.optional(),
-      certifications: plainSection.optional(),
+      faq: plainSection.optional(),
       contact: plainSection.extend({ description: z.string() }).optional(),
     }),
     skills: z
@@ -74,24 +107,11 @@ const site = defineCollection({
         }),
       )
       .optional(),
-    education: z
+    faq: z
       .array(
         z.object({
-          school: z.string(),
-          credential: z.string(),
-          location: z.string().optional(),
-          startDate: z.coerce.date(),
-          endDate: z.coerce.date().optional(),
-          current: z.boolean().optional().default(false),
-        }),
-      )
-      .optional(),
-    certifications: z
-      .array(
-        z.object({
-          name: z.string(),
-          year: z.string(),
-          url: z.string().url().optional(),
+          q: z.string(),
+          a: z.string(),
         }),
       )
       .optional(),
@@ -99,6 +119,8 @@ const site = defineCollection({
       .object({
         email: z.string().email(),
         location: z.string().optional(),
+        /** IANA zone, e.g. "Africa/Lagos" — drives the live local clock in the hero. */
+        timezone: z.string().optional(),
       })
       .optional(),
     socialLinks: z

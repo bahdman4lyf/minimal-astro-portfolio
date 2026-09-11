@@ -1,0 +1,387 @@
+---
+// ⌘K / Ctrl+K palette. The index is built at compile time from every
+// collection, so searching costs nothing at runtime and works offline.
+import { getCollection } from "astro:content";
+import { NAVIGATION } from "../../constants/navigation";
+
+type Item = { title: string; hint: string; href: string; group: string; external?: boolean };
+
+const items: Item[] = [];
+
+for (const { name, path } of NAVIGATION) {
+  items.push({ title: name, hint: "Go to page", href: path, group: "Pages" });
+}
+
+const sections: [string, string][] = [
+  ["What I do", "#services"],
+  ["Selected work", "#work"],
+  ["Experience", "#experience"],
+  ["How I work", "#principles"],
+  ["Skills & tools", "#skills"],
+  ["Working with me", "#faq"],
+  ["Get in touch", "#contact"],
+];
+for (const [title, hash] of sections) {
+  items.push({ title, hint: "Home section", href: `/${hash}`, group: "Pages" });
+}
+
+const drafts = (data: { draft?: boolean }) => (import.meta.env.PROD ? !data.draft : true);
+
+for (const post of await getCollection("blog", ({ data }) => drafts(data))) {
+  items.push({ title: post.data.title, hint: post.data.description, href: `/blog/${post.id}`, group: "Writing" });
+}
+for (const note of await getCollection("notes", ({ data }) => drafts(data))) {
+  items.push({ title: note.data.title, hint: note.data.category, href: `/notes/${note.id}`, group: "Notes" });
+}
+for (const bookmark of await getCollection("bookmarks")) {
+  items.push({
+    title: bookmark.data.title,
+    hint: `${bookmark.data.type} · ${bookmark.data.author}`,
+    href: bookmark.data.url,
+    group: "Bookmarks",
+    external: true,
+  });
+}
+---
+
+<div class="palette" hidden>
+  <div class="palette-backdrop" data-palette-close></div>
+  <div class="palette-panel glass" role="dialog" aria-modal="true" aria-label="Search">
+    <div class="palette-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+      </svg>
+      <input class="palette-input" type="text" placeholder="Search posts, notes, bookmarks, pages…" autocomplete="off" spellcheck="false" />
+      <kbd>esc</kbd>
+    </div>
+    <ul class="palette-list" role="listbox"></ul>
+    <div class="palette-foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+      <span class="palette-count"></span>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="palette-index" set:html={JSON.stringify(items)} />
+
+<script>
+  type Item = { title: string; hint: string; href: string; group: string; external?: boolean };
+
+  const items: Item[] = JSON.parse(document.getElementById("palette-index")?.textContent ?? "[]");
+  const root = document.querySelector<HTMLElement>(".palette");
+  const input = root?.querySelector<HTMLInputElement>(".palette-input");
+  const list = root?.querySelector<HTMLUListElement>(".palette-list");
+  const count = root?.querySelector<HTMLElement>(".palette-count");
+
+  let results: Item[] = [];
+  let active = 0;
+
+  // Cheap scoring: prefix > word-start > substring, title outranks hint.
+  const score = (item: Item, q: string) => {
+    const t = item.title.toLowerCase();
+    const h = item.hint.toLowerCase();
+    if (t.startsWith(q)) return 4;
+    if (t.split(/\s+/).some((w) => w.startsWith(q))) return 3;
+    if (t.includes(q)) return 2;
+    if (h.includes(q)) return 1;
+    return 0;
+  };
+
+  const render = () => {
+    if (!list || !count) return;
+    list.innerHTML = "";
+    let lastGroup = "";
+    results.forEach((item, i) => {
+      if (item.group !== lastGroup) {
+        const g = document.createElement("li");
+        g.className = "palette-group";
+        g.textContent = item.group;
+        list.appendChild(g);
+        lastGroup = item.group;
+      }
+      const li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.className = "palette-item" + (i === active ? " is-active" : "");
+      li.dataset.index = String(i);
+      li.innerHTML = `<span class="palette-title"></span><span class="palette-hint"></span>${
+        item.external ? '<span class="palette-ext">↗</span>' : ""
+      }`;
+      li.querySelector(".palette-title")!.textContent = item.title;
+      li.querySelector(".palette-hint")!.textContent = item.hint;
+      li.addEventListener("mouseenter", () => {
+        active = i;
+        highlight();
+      });
+      li.addEventListener("click", () => go(item));
+      list.appendChild(li);
+    });
+    if (!results.length) {
+      const li = document.createElement("li");
+      li.className = "palette-empty";
+      li.textContent = "Nothing matches — try a different word.";
+      list.appendChild(li);
+    }
+    count.textContent = results.length ? `${results.length} result${results.length === 1 ? "" : "s"}` : "";
+  };
+
+  const highlight = () => {
+    list?.querySelectorAll<HTMLElement>(".palette-item").forEach((el) => {
+      const on = Number(el.dataset.index) === active;
+      el.classList.toggle("is-active", on);
+      if (on) el.scrollIntoView({ block: "nearest" });
+    });
+  };
+
+  const search = () => {
+    const q = (input?.value ?? "").trim().toLowerCase();
+    results = q
+      ? items
+          .map((item) => ({ item, s: score(item, q) }))
+          .filter(({ s }) => s > 0)
+          .sort((a, b) => b.s - a.s)
+          .map(({ item }) => item)
+          .slice(0, 12)
+      : items.slice(0, 10);
+    active = 0;
+    render();
+  };
+
+  const go = (item: Item) => {
+    close();
+    if (item.external) window.open(item.href, "_blank", "noopener");
+    else window.location.href = item.href;
+  };
+
+  const open = () => {
+    if (!root || !input) return;
+    root.hidden = false;
+    document.documentElement.classList.add("palette-open");
+    input.value = "";
+    search();
+    requestAnimationFrame(() => input.focus());
+  };
+
+  const close = () => {
+    if (!root) return;
+    root.hidden = true;
+    document.documentElement.classList.remove("palette-open");
+  };
+
+  const isOpen = () => root && !root.hidden;
+
+  document.addEventListener("keydown", (e) => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName) && e.target !== input;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      isOpen() ? close() : open();
+      return;
+    }
+    if (e.key === "/" && !isOpen() && !typing) {
+      e.preventDefault();
+      open();
+      return;
+    }
+    if (!isOpen()) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      active = Math.min(active + 1, results.length - 1);
+      highlight();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      active = Math.max(active - 1, 0);
+      highlight();
+    }
+    if (e.key === "Enter" && results[active]) {
+      e.preventDefault();
+      go(results[active]);
+    }
+  });
+
+  input?.addEventListener("input", search);
+  root?.querySelectorAll("[data-palette-close]").forEach((el) => el.addEventListener("click", close));
+  document.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).closest("[data-open-palette]")) {
+      e.preventDefault();
+      open();
+    }
+  });
+  // Persisted across view transitions: start closed on arrival, unless the URL
+  // asks for it (`/#search` — also what the nav button falls back to without JS).
+  document.addEventListener("astro:page-load", () => {
+    if (location.hash === "#search") {
+      history.replaceState(null, "", location.pathname);
+      open();
+    } else {
+      close();
+    }
+  });
+</script>
+
+<style is:global>
+  /* Global on purpose: result rows are built by the script above and would
+     otherwise miss Astro's scoped attribute. Every selector is .palette-prefixed. */
+  .palette {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: start center;
+    padding: 12vh 1rem 1rem;
+  }
+
+  .palette-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  .palette-panel {
+    position: relative;
+    width: min(100%, 600px);
+    border-radius: 1.1rem;
+    background: rgba(20, 20, 22, 0.85);
+    overflow: hidden;
+    animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    /* toast-in translates on X for centering; cancel that here. */
+    transform: none !important;
+  }
+
+  .palette-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-muted);
+  }
+
+  .palette-input-row svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+  }
+
+  .palette-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    background: none;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-color);
+  }
+
+  .palette-input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .palette-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
+
+  .palette kbd {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+  }
+
+  .palette-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    max-height: min(52vh, 420px);
+    overflow-y: auto;
+  }
+
+  .palette-group {
+    padding: 0.6rem 0.75rem 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0.7;
+    margin: 0;
+  }
+
+  .palette-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .palette-item.is-active {
+    background: var(--accent-soft);
+  }
+
+  .palette-title {
+    font-size: var(--text-sm);
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .palette-hint {
+    grid-column: 1;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .palette-ext {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    color: var(--text-muted);
+  }
+
+  .palette-empty {
+    padding: 1.5rem 0.75rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin: 0;
+  }
+
+  .palette-foot {
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    border-top: 1px solid var(--glass-border);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+
+  .palette-foot span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .palette-count {
+    margin-left: auto;
+  }
+
+  html.palette-open {
+    overflow: hidden;
+  }
+</style>

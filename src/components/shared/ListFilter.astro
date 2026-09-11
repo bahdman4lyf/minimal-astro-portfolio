@@ -1,0 +1,109 @@
+---
+// Client-side filter for a list of ArticleCards. Matches against each card's
+// data-search attribute; the list is small enough that no index is needed.
+interface Props {
+  placeholder?: string;
+  target: string; // CSS selector of the list whose children get filtered
+}
+
+const { placeholder = "Filter by title, topic or author…", target } = Astro.props;
+---
+
+<div class="filter" data-filter={target}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 6h16M7 12h10M10 18h4" />
+  </svg>
+  <input type="search" placeholder={placeholder} aria-label="Filter list" autocomplete="off" />
+  <span class="filter-count" data-filter-count aria-live="polite"></span>
+</div>
+<p class="filter-empty" data-filter-empty hidden>Nothing matches that. Try another word — or <a href="#" data-filter-clear>clear the filter</a>.</p>
+
+<script>
+  const init = () => {
+    document.querySelectorAll<HTMLElement>("[data-filter]").forEach((box) => {
+      const input = box.querySelector<HTMLInputElement>("input");
+      const list = document.querySelector<HTMLElement>(box.dataset.filter!);
+      const count = box.querySelector<HTMLElement>("[data-filter-count]");
+      const empty = box.parentElement?.querySelector<HTMLElement>("[data-filter-empty]");
+      if (!input || !list) return;
+
+      const apply = () => {
+        const q = input.value.trim().toLowerCase();
+        let shown = 0;
+        list.querySelectorAll<HTMLElement>("[data-search]").forEach((card) => {
+          const hit = !q || (card.dataset.search ?? "").includes(q);
+          card.hidden = !hit;
+          if (hit) shown++;
+        });
+        if (count) count.textContent = q ? `${shown} match${shown === 1 ? "" : "es"}` : "";
+        if (empty) empty.hidden = shown > 0;
+      };
+
+      input.addEventListener("input", apply);
+      empty?.querySelector("[data-filter-clear]")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        input.value = "";
+        apply();
+        input.focus();
+      });
+    });
+  };
+  document.addEventListener("astro:page-load", init);
+</script>
+
+<style>
+  .filter {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.5rem 0 0;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-muted);
+    transition: border-color var(--transition-base);
+  }
+
+  .filter:focus-within {
+    border-color: var(--accent-border);
+  }
+
+  .filter svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+
+  .filter input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    background: none;
+    font-size: var(--text-sm);
+    font-weight: 400;
+    color: var(--text-color);
+  }
+
+  .filter input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .filter input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+
+  .filter-count {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .filter-empty {
+    margin: 2rem 0;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+  }
+</style>

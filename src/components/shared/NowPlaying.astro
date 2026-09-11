@@ -1,0 +1,681 @@
+---
+// Floating "now playing" dock. Polls /api/spotify.json for what's playing on my
+// Spotify and lets visitors hear it through Spotify's Embed iFrame API: a
+// 30-second excerpt for anyone, the full track if they're signed in to Spotify
+// in this browser. Our own play/pause button drives the embed, so the official
+// player can stay tucked away until someone wants it.
+//
+// Autoplay is attempted as soon as the embed is ready; browsers block audio
+// until the visitor interacts, so we retry on their first click or keypress.
+// Once a visitor pauses, we stay quiet for the rest of their session.
+// Persisted across view transitions so playback doesn't reset on navigation.
+---
+
+<aside class="np glass" data-now-playing hidden aria-label="Now playing on Spotify">
+  <div class="np-main">
+    <button class="np-art-btn" type="button" data-np-toggle-play aria-label="Play">
+      <img class="np-art" data-np-art alt="" width="56" height="56" />
+      <span class="np-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="np-play" aria-hidden="true">
+        <svg class="np-icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
+        <svg class="np-icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zm6 0h4v14h-4z" /></svg>
+        <svg class="np-icon-wait" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+      </span>
+    </button>
+    <div class="np-body">
+      <span class="np-label">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24m5.5 17.3a.75.75 0 0 1-1.03.25c-2.82-1.72-6.37-2.11-10.55-1.16a.75.75 0 1 1-.33-1.46c4.57-1.04 8.5-.6 11.65 1.33.35.22.46.68.25 1.04m1.47-3.27a.94.94 0 0 1-1.29.31c-3.23-1.98-8.15-2.56-11.97-1.4a.94.94 0 1 1-.54-1.8c4.36-1.32 9.78-.68 13.49 1.6.44.27.58.85.31 1.29m.13-3.4C15.24 8.33 8.9 8.12 5.2 9.24a1.13 1.13 0 1 1-.65-2.16c4.25-1.29 11.3-1.04 15.76 1.61a1.13 1.13 0 0 1-1.15 1.94"/>
+        </svg>
+        <span data-np-status>Now playing</span>
+      </span>
+      <a class="np-title" data-np-url data-np-title href="#" target="_blank" rel="noopener noreferrer"></a>
+      <span class="np-artist" data-np-artist></span>
+      <span class="np-progress" aria-hidden="true"><span class="np-progress-bar" data-np-bar></span></span>
+      <span class="np-note" data-np-note hidden>
+        30s preview ·
+        <a data-np-signin href="#" target="_blank" rel="noopener noreferrer">sign in to Spotify</a>
+        for the full song
+      </span>
+    </div>
+    <div class="np-actions">
+      <button class="np-icon-btn" type="button" data-np-toggle aria-label="Collapse player">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      <button class="np-icon-btn" type="button" data-np-expand aria-label="Show Spotify player" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 14v4a2 2 0 0 0 2 2h4M20 10V6a2 2 0 0 0-2-2h-4" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <!-- The official embed lives here. Kept at zero height until expanded so it
+       can still play while our own controls are the visible surface. -->
+  <div class="np-embed" data-np-embed>
+    <div data-np-embed-host></div>
+  </div>
+</aside>
+
+<script>
+  type NowPlaying = {
+    configured: boolean;
+    isPlaying: boolean;
+    title?: string;
+    artist?: string;
+    albumArt?: string;
+    url?: string;
+    trackId?: string;
+    kind?: "track" | "episode";
+    progressMs?: number;
+    durationMs?: number;
+    playedAt?: string;
+  };
+
+  // Minimal typing for https://developer.spotify.com/documentation/embeds/references/iframe-api
+  type EmbedController = {
+    destroy: () => void;
+    loadUri: (uri: string) => void;
+    play: () => void;
+    pause: () => void;
+    resume: () => void;
+    togglePlay: () => void;
+    seek: (seconds: number) => void;
+    addListener: (event: string, cb: (e: { data: any }) => void) => void;
+  };
+  type IFrameAPI = {
+    createController: (
+      el: HTMLElement,
+      options: { uri: string; width?: string | number; height?: string | number; theme?: string },
+      cb: (controller: EmbedController) => void,
+    ) => void;
+  };
+  declare global {
+    interface Window {
+      onSpotifyIframeApiReady?: (api: IFrameAPI) => void;
+    }
+  }
+
+  const root = document.querySelector<HTMLElement>("[data-now-playing]");
+  if (root) {
+    const art = root.querySelector<HTMLImageElement>("[data-np-art]")!;
+    const artBtn = root.querySelector<HTMLButtonElement>("[data-np-toggle-play]")!;
+    const title = root.querySelector<HTMLElement>("[data-np-title]")!;
+    const artist = root.querySelector<HTMLElement>("[data-np-artist]")!;
+    const status = root.querySelector<HTMLElement>("[data-np-status]")!;
+    const bar = root.querySelector<HTMLElement>("[data-np-bar]")!;
+    const links = root.querySelectorAll<HTMLAnchorElement>("[data-np-url]");
+    const toggle = root.querySelector<HTMLButtonElement>("[data-np-toggle]")!;
+    const expand = root.querySelector<HTMLButtonElement>("[data-np-expand]")!;
+    const embedWrap = root.querySelector<HTMLElement>("[data-np-embed]")!;
+    const embedHost = root.querySelector<HTMLElement>("[data-np-embed-host]")!;
+    const note = root.querySelector<HTMLElement>("[data-np-note]")!;
+    const signIn = root.querySelector<HTMLAnchorElement>("[data-np-signin]")!;
+
+    let current: NowPlaying | null = null;
+    let fetchedAt = 0;
+    let pollTimer = 0;
+    let raf = 0;
+
+    // Embed state
+    let api: IFrameAPI | null = null;
+    let controller: EmbedController | null = null;
+    let loadedTrack = "";
+    let embedPaused = true;
+    let embedPosition = 0; // ms
+    let embedDuration = 0; // ms
+    let wantPlay = false; // visitor (or autoplay) asked for sound
+    let seekedFor = "";
+
+    const pausedKey = "np-user-paused";
+    const userPaused = () => {
+      try {
+        return sessionStorage.getItem(pausedKey) === "1";
+      } catch {
+        return false;
+      }
+    };
+    const setUserPaused = (v: boolean) => {
+      try {
+        sessionStorage.setItem(pausedKey, v ? "1" : "0");
+      } catch {}
+    };
+
+    const relative = (iso: string) => {
+      const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+      if (mins < 1) return "Just played";
+      if (mins < 60) return `Played ${mins}m ago`;
+      const hours = Math.round(mins / 60);
+      if (hours < 24) return `Played ${hours}h ago`;
+      return `Played ${Math.round(hours / 24)}d ago`;
+    };
+
+    const setState = (state: "idle" | "loading" | "audible") => {
+      root.classList.toggle("is-audible", state === "audible");
+      root.classList.toggle("is-loading", state === "loading");
+      artBtn.setAttribute("aria-label", state === "audible" ? "Pause" : "Play");
+    };
+
+    // ---- Spotify Embed iFrame API ----
+    const loadEmbedApi = () => {
+      if (document.querySelector("script[data-spotify-embed]")) return;
+      window.onSpotifyIframeApiReady = (IFrameAPI) => {
+        api = IFrameAPI;
+        if (current?.trackId) ensureController(current.trackId);
+      };
+      const s = document.createElement("script");
+      s.src = "https://open.spotify.com/embed/iframe-api/v1";
+      s.async = true;
+      s.dataset.spotifyEmbed = "1";
+      document.head.appendChild(s);
+    };
+
+    const ensureController = (trackId: string) => {
+      if (!api) return;
+      const uri = `spotify:${current?.kind ?? "track"}:${trackId}`;
+      if (controller) {
+        if (loadedTrack !== trackId) {
+          loadedTrack = trackId;
+          seekedFor = "";
+          controller.loadUri(uri);
+          if (wantPlay) controller.play();
+        }
+        return;
+      }
+      loadedTrack = trackId;
+      api.createController(embedHost, { uri, width: "100%", height: 80, theme: "dark" }, (c) => {
+        controller = c;
+        c.addListener("ready", () => {
+          if (wantPlay) c.play();
+        });
+        c.addListener("playback_update", (e) => {
+          const d = e.data ?? {};
+          embedPaused = Boolean(d.isPaused);
+          embedPosition = Number(d.position ?? 0);
+          embedDuration = Number(d.duration ?? 0);
+          updatePreviewNote();
+          if (!embedPaused) {
+            setState("audible");
+            syncPosition();
+          } else {
+            setState(wantPlay && d.isBuffering ? "loading" : "idle");
+          }
+        });
+      });
+    };
+
+    // Preview mode: Spotify hands anonymous visitors a fixed 30-second excerpt.
+    // We can tell because the embed's duration is ~30s while the real track is
+    // longer. Surface the way out (signing in) rather than leaving them guessing.
+    let signInOpened = false;
+    const updatePreviewNote = () => {
+      const preview = embedDuration > 0 && embedDuration <= 31_000 && (current?.durationMs ?? 0) > 35_000;
+      note.hidden = !preview;
+    };
+
+    signIn.addEventListener("click", () => {
+      signInOpened = true;
+      // Land them on the track after login so the account link is obvious.
+      signIn.href = `https://accounts.spotify.com/login?continue=${encodeURIComponent(current?.url ?? "https://open.spotify.com")}`;
+    });
+
+    // When they come back from the login tab, rebuild the embed so it picks up
+    // the fresh Spotify session and switches from preview to the full track.
+    window.addEventListener("focus", () => {
+      if (!signInOpened || !controller || !current?.trackId) return;
+      signInOpened = false;
+      const resume = wantPlay;
+      controller.destroy();
+      controller = null;
+      loadedTrack = "";
+      seekedFor = "";
+      embedDuration = 0;
+      note.hidden = true;
+      wantPlay = resume;
+      ensureController(current.trackId);
+    });
+
+    // Listen along: when the embed has the full track (signed-in visitor) and
+    // Spotify says I'm mid-song, jump to the same spot. Previews are a fixed
+    // 30-second excerpt, so seeking there would only cut the clip short.
+    const syncPosition = () => {
+      if (!controller || !current?.isPlaying || !current.durationMs || current.progressMs == null) return;
+      if (seekedFor === current.trackId) return;
+      const fullTrack = embedDuration > 35_000 && Math.abs(embedDuration - current.durationMs) < 5_000;
+      if (!fullTrack) return;
+      seekedFor = current.trackId ?? "";
+      const liveMs = current.progressMs + (Date.now() - fetchedAt);
+      controller.seek(Math.max(0, Math.floor(liveMs / 1000)));
+    };
+
+    const play = () => {
+      wantPlay = true;
+      if (!controller) {
+        setState("loading");
+        return; // "ready" listener will start it
+      }
+      embedPaused ? controller.resume() : void 0;
+      // resume() is a no-op before first play; play() covers that case.
+      controller.play();
+      setState("loading");
+    };
+
+    const pause = () => {
+      wantPlay = false;
+      controller?.pause();
+      setState("idle");
+    };
+
+    let armed = false;
+    const armAutoplayOnGesture = () => {
+      if (armed) return;
+      armed = true;
+      const attempt = () => {
+        document.removeEventListener("pointerdown", attempt);
+        document.removeEventListener("keydown", attempt);
+        armed = false;
+        if (!userPaused() && embedPaused) play();
+      };
+      document.addEventListener("pointerdown", attempt, { once: true });
+      document.addEventListener("keydown", attempt, { once: true });
+    };
+
+    artBtn.addEventListener("click", () => {
+      if (root.classList.contains("is-audible")) {
+        setUserPaused(true);
+        pause();
+      } else {
+        setUserPaused(false);
+        play();
+      }
+    });
+
+    expand.addEventListener("click", () => {
+      const open = embedWrap.classList.toggle("is-open");
+      expand.setAttribute("aria-expanded", String(open));
+      expand.setAttribute("aria-label", open ? "Hide Spotify player" : "Show Spotify player");
+    });
+
+    // ---- progress ----
+    const tick = () => {
+      if (!embedPaused && embedDuration) {
+        bar.style.transform = `scaleX(${Math.min(1, embedPosition / embedDuration)})`;
+      } else if (current?.isPlaying && current.durationMs && current.progressMs != null) {
+        const elapsed = current.progressMs + (Date.now() - fetchedAt);
+        bar.style.transform = `scaleX(${Math.min(1, elapsed / current.durationMs)})`;
+        if (elapsed > current.durationMs + 1500) {
+          fetchedAt = Date.now();
+          load();
+        }
+      } else {
+        bar.style.transform = "scaleX(0)";
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    // ---- rendering ----
+    const render = (data: NowPlaying) => {
+      current = data;
+      fetchedAt = Date.now();
+      if (!data.configured || !data.title) {
+        root.hidden = true;
+        return;
+      }
+      root.hidden = false;
+      root.classList.toggle("is-playing", data.isPlaying);
+      status.textContent = data.isPlaying ? "Now playing" : data.playedAt ? relative(data.playedAt) : "Last played";
+      title.textContent = data.title ?? "";
+      artist.textContent = data.artist ?? "";
+      if (data.albumArt && art.src !== data.albumArt) art.src = data.albumArt;
+      links.forEach((a) => (a.href = data.url ?? "#"));
+
+      if (data.trackId) {
+        loadEmbedApi();
+        ensureController(data.trackId);
+        // First sight of a track: try to start it. If the browser wants a
+        // gesture first, the next click anywhere on the page will do.
+        if (!userPaused() && !wantPlay) {
+          play();
+          armAutoplayOnGesture();
+        }
+      }
+    };
+
+    const load = async () => {
+      try {
+        const res = await fetch("/api/spotify.json", { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        render((await res.json()) as NowPlaying);
+      } catch {
+        if (!current) root.hidden = true;
+      }
+    };
+
+    const schedule = () => {
+      window.clearInterval(pollTimer);
+      pollTimer = window.setInterval(() => {
+        if (document.hidden) return;
+        load();
+      }, current?.isPlaying ? 20_000 : 60_000);
+    };
+
+    toggle.addEventListener("click", () => {
+      const collapsed = root.classList.toggle("is-collapsed");
+      toggle.setAttribute("aria-label", collapsed ? "Expand player" : "Collapse player");
+      try {
+        localStorage.setItem("np-collapsed", collapsed ? "1" : "0");
+      } catch {}
+    });
+
+    try {
+      if (localStorage.getItem("np-collapsed") === "1") root.classList.add("is-collapsed");
+    } catch {}
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) load();
+    });
+
+    load().then(schedule);
+    cancelAnimationFrame(raf);
+    tick();
+  }
+</script>
+
+<style>
+  .np {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 80;
+    width: min(340px, calc(100vw - 2rem));
+    padding: 0.6rem;
+    border-radius: 1rem;
+    background: rgba(17, 17, 17, 0.8);
+    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .np-main {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .np-art-btn {
+    position: relative;
+    display: block;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 0;
+    border-radius: 0.6rem;
+    overflow: hidden;
+    background: var(--glass-bg-strong);
+    cursor: pointer;
+  }
+
+  .np-art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    display: block;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter var(--transition-base);
+  }
+
+  .np-art-btn:hover .np-art {
+    transform: scale(1.06);
+    filter: brightness(0.7);
+  }
+
+  /* Play / pause / buffering overlay on the art. */
+  .np-play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    transition: opacity var(--transition-base);
+  }
+
+  .np-play svg {
+    width: 1.4rem;
+    height: 1.4rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  }
+
+  .np-icon-pause,
+  .np-icon-wait {
+    display: none;
+  }
+
+  .np.is-loading .np-icon-play {
+    display: none;
+  }
+
+  .np.is-loading .np-icon-wait {
+    display: block;
+    animation: spin-slow 0.9s linear infinite;
+  }
+
+  .np.is-audible .np-play {
+    opacity: 0;
+  }
+
+  .np.is-audible .np-art-btn:hover .np-play {
+    opacity: 1;
+  }
+
+  .np.is-audible .np-icon-play {
+    display: none;
+  }
+
+  .np.is-audible .np-icon-pause {
+    display: block;
+  }
+
+  /* Equaliser over the art — only moves while sound is coming out. */
+  .np-eq {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    padding-bottom: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    pointer-events: none;
+  }
+
+  .np.is-audible .np-eq {
+    opacity: 1;
+  }
+
+  .np.is-audible .np-art-btn:hover .np-eq {
+    opacity: 0;
+  }
+
+  .np-eq i {
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--success);
+    transform-origin: bottom;
+    animation: eq-bar 0.9s ease-in-out infinite;
+  }
+
+  .np-eq i:nth-child(2) {
+    animation-delay: -0.3s;
+  }
+  .np-eq i:nth-child(3) {
+    animation-delay: -0.6s;
+  }
+
+  .np-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.1rem;
+  }
+
+  .np-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .np-label svg {
+    width: 0.8rem;
+    height: 0.8rem;
+    color: #1db954;
+  }
+
+  .np-title {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .np-title::after {
+    display: none;
+  }
+
+  .np-title:hover {
+    color: var(--accent);
+  }
+
+  .np-artist {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .np-progress {
+    display: block;
+    height: 2px;
+    margin-top: 0.35rem;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+  }
+
+  .np-progress-bar {
+    display: block;
+    height: 100%;
+    background: var(--success);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .np-note {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.6rem;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .np-note a {
+    color: var(--accent);
+  }
+
+  .np-note a::after {
+    display: none;
+  }
+
+  .np-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .np-icon-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    transition: background var(--transition-base), color var(--transition-base), transform var(--transition-base);
+  }
+
+  .np-icon-btn svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .np-icon-btn:hover {
+    background: var(--glass-bg-strong);
+    color: var(--text-color);
+  }
+
+  /* Official embed: zero height until expanded, never display:none, so it can
+     keep playing while hidden. */
+  .np-embed {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin var(--transition-base);
+  }
+
+  .np-embed.is-open {
+    height: 80px;
+    margin-top: 0.6rem;
+  }
+
+  .np-embed :global(iframe) {
+    display: block;
+    border-radius: 0.6rem;
+  }
+
+  /* Collapsed: just the art, sitting in the corner. */
+  .np.is-collapsed {
+    width: 72px;
+  }
+
+  .np.is-collapsed .np-main {
+    grid-template-columns: 56px;
+  }
+
+  .np.is-collapsed .np-body,
+  .np.is-collapsed [data-np-expand],
+  .np.is-collapsed .np-embed {
+    display: none;
+  }
+
+  .np.is-collapsed [data-np-toggle] {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    background: rgba(17, 17, 17, 0.9);
+    border-color: var(--glass-border);
+    transform: rotate(180deg);
+  }
+
+  @media (max-width: 640px) {
+    .np {
+      left: 0.75rem;
+      bottom: 0.75rem;
+      width: min(300px, calc(100vw - 1.5rem));
+    }
+  }
+</style>

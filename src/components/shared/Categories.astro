@@ -7,15 +7,16 @@ interface Props {
 }
 
 const { categories, currentPath, plural, basePath } = Astro.props;
+const normalized = currentPath.replace(/\/$/, "");
 ---
 
-<div class="categories">
-  <a href={`/${basePath}`} class:list={["category-link", { active: currentPath === `/${basePath}` }]}> All </a>
+<div class="categories" data-reveal style="--reveal-delay: 180ms">
+  <a href={`/${basePath}`} class:list={["category-link", { active: normalized === `/${basePath}` }]}>All</a>
   {
     categories.map((category) => (
       <a
         href={`/${basePath}/${category}`}
-        class:list={["category-link", { active: currentPath === `/${basePath}/${category}` }]}
+        class:list={["category-link", { active: normalized === `/${basePath}/${category}` }]}
       >
         {category + (plural ? "s" : "")}
       </a>
@@ -26,26 +27,30 @@ const { categories, currentPath, plural, basePath } = Astro.props;
 <style>
   .categories {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 
   .category-link {
     color: var(--text-muted);
     font-size: var(--text-sm);
-    border: 1px solid var(--border-color);
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    text-decoration: none;
-    transition:
-      background var(--transition-base),
-      color var(--transition-base);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    text-transform: capitalize;
+    transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base);
   }
 
-  .category-link:hover,
-  .category-link.active {
-    background: var(--hover-bg);
+  .category-link:hover {
     color: var(--text-color);
+    border-color: var(--glass-border-strong);
+  }
+
+  .category-link.active {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: var(--accent);
   }
 </style>

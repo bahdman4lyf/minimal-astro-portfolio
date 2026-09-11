@@ -5,66 +5,171 @@ interface Props {
   url: string;
   date?: Date;
   tags?: string[];
+  external?: boolean;
 }
 
-const { title, description, url, date, tags } = Astro.props;
+const { title, description, url, date, tags, external = url.startsWith("http") } = Astro.props;
 import { formatDate } from "../../utils/date";
+
+// Everything the list filter should be able to match on, lower-cased once.
+const search = [title, description, ...(tags ?? [])].filter(Boolean).join(" ").toLowerCase();
 ---
 
-<article data-reveal>
-  <div class="title-row">
-    <a href={url} title={title}>
-      {title}
-    </a>
-    {date && <time datetime={date.toISOString()}>{formatDate(date)}</time>}
+<a
+  class="card glass"
+  href={url}
+  target={external ? "_blank" : undefined}
+  rel={external ? "noopener noreferrer" : undefined}
+  data-reveal
+  data-spotlight
+  data-search={search}
+>
+  <div class="card-body">
+    <h3 class="card-title">{title}</h3>
+    {description && <p class="card-desc">{description}</p>}
+    {
+      tags && (
+        <div class="tags">
+          {tags.map((tag) => (
+            <span class="tag">{tag}</span>
+          ))}
+        </div>
+      )
+    }
   </div>
-  <p class="muted-text">{description}</p>
-  {
-    tags && (
-      <div class="tags">
-        {tags.map((tag) => (
-          <span>{tag}</span>
-        ))}
-      </div>
-    )
-  }
-</article>
+  <div class="card-meta">
+    {date && <time datetime={date.toISOString()}>{formatDate(date)}</time>}
+    <span class="card-arrow" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        {external ? <path d="M7 17 17 7M8 7h9v9" /> : <path d="M5 12h14M13 6l6 6-6 6" />}
+      </svg>
+    </span>
+  </div>
+</a>
 
 <style>
-  .title-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-  }
-
-  .title-row a {
-    font-size: var(--text-lg);
-    text-decoration: none;
+  .card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 1.25rem;
+    padding: 1.25rem 1.35rem;
+    border-radius: var(--radius-lg);
     color: var(--text-color);
-    /* Keep long titles on one line instead of wrapping and pushing the date down */
-    min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    --mx: 50%;
+    --my: 50%;
+    transition: border-color var(--transition-base), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .title-row time {
-    flex-shrink: 0;
+  .card::after {
+    display: none;
   }
 
-  .title-row a:hover {
-    color: var(--link-color);
+  /* Pointer spotlight; coordinates come from BaseLayout's shared script. */
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(320px circle at var(--mx) var(--my), rgba(167, 139, 250, 0.12), transparent 45%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .card:hover {
+    border-color: var(--glass-border-strong);
+    transform: translateY(-2px);
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  .card > * {
+    position: relative;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    margin: 0 0 0.3rem;
+    transition: color var(--transition-base);
+  }
+
+  .card:hover .card-title {
+    color: var(--accent);
+  }
+
+  .card-desc {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
   }
 
   .tags {
     display: flex;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
   }
 
-  .tags span {
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 0.45rem;
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+  }
+
+  .card-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+
+  time {
+    font-family: var(--font-mono);
     font-size: var(--text-xs);
-    opacity: 0.5;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .card-arrow {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    transition: background var(--transition-base), color var(--transition-base), transform var(--transition-base);
+  }
+
+  .card-arrow svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .card:hover .card-arrow {
+    background: var(--text-color);
+    color: var(--bg-color);
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 640px) {
+    .card {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      padding: 1.1rem;
+    }
+
+    .card-meta {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
   }
 </style>

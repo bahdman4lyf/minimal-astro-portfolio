@@ -5,6 +5,7 @@ import BaseHero from "../../components/shared/BaseHero.astro";
 import ArticleCard from "../../components/ui/ArticleCard.astro";
 import Container from "../../components/ui/Container.astro";
 import ContentList from "../../components/shared/ContentList.astro";
+import ListFilter from "../../components/shared/ListFilter.astro";
 
 const posts = await getCollection("blog", ({ data }) => {
   return import.meta.env.PROD ? !data.draft : true;
@@ -13,10 +14,19 @@ const posts = await getCollection("blog", ({ data }) => {
 const sortedPosts = posts.sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
 ---
 
-<BaseLayout title="Blog" description="Read my latest blog posts">
+<BaseLayout title="Blog" description="Long-form writing on mobile engineering, shipping and the messy middle">
   <Container>
-    <BaseHero title="Blog" description="Read my latest blog posts" />
-    <ContentList>
+    <BaseHero
+      kicker="Writing"
+      title="Notes from"
+      accent="the field"
+      description="Long-form pieces on mobile engineering, shipping, and the bugs that only show up on real devices."
+      count={sortedPosts.length}
+      countLabel="posts"
+    >
+      <ListFilter target="#post-list" />
+    </BaseHero>
+    <ContentList id="post-list">
       {
         sortedPosts.map((post) => (
           <ArticleCard

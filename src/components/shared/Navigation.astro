@@ -1,67 +1,209 @@
 ---
 import { NAVIGATION } from "../../constants/navigation";
+import { getEntry } from "astro:content";
+
 const pathname = new URL(Astro.request.url).pathname;
 
 const isActive = (path: string) => {
   if (path === "/") return pathname === "/";
   return pathname.startsWith(path);
 };
+
+const site = await getEntry("site", "home");
+const email = site?.data.contact?.email;
 ---
 
-<nav>
+<nav class="nav glass" aria-label="Primary">
+  <a href="/" class="brand" aria-label="Home">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-text">blank<span class="brand-dot">.</span></span>
+  </a>
+
   <div class="nav-links">
     {
       NAVIGATION.map(({ name, path }) => (
-        <a href={path} class={isActive(path) ? "active" : ""}>
+        <a href={path} class:list={["nav-link", { active: isActive(path) }]} aria-current={isActive(path) ? "page" : undefined}>
           {name}
         </a>
       ))
     }
   </div>
+
+  <button type="button" class="nav-search" data-open-palette aria-label="Search (⌘K)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+    </svg>
+    <kbd>⌘K</kbd>
+  </button>
+
+  {
+    email && (
+      <a href={`mailto:${email}`} class="nav-cta">
+        <span>Let's talk</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 17 17 7M8 7h9v9" />
+        </svg>
+      </a>
+    )
+  }
 </nav>
 
 <style>
-  nav {
+  .nav {
     display: flex;
     align-items: center;
+    gap: 1.25rem;
+    padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: var(--text-sm);
+    transition: background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  /* Once the page scrolls the pill firms up so it separates from the content underneath. */
+  :global(html.scrolled) .nav {
+    background: rgba(17, 17, 17, 0.6);
+    border-color: var(--glass-border-strong);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: 0.95rem;
+  }
+
+  .brand::after {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .brand-dot {
+    color: var(--accent);
+  }
+
+  .nav-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    transition: color var(--transition-base), background var(--transition-base);
+  }
+
+  .nav-search svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .nav-search kbd {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.3rem;
+    border: 1px solid var(--glass-border);
+  }
+
+  .nav-search:hover {
+    color: var(--text-color);
+    background: var(--glass-bg-strong);
   }
 
   .nav-links {
     display: flex;
-    gap: 1.5rem;
+    align-items: center;
+    gap: 0.15rem;
   }
 
-  .nav-links a {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    transition: color var(--transition-base);
+  .nav-link {
     position: relative;
-  }
-
-  a {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
     color: var(--text-muted);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    transition: color var(--transition-base);
-    position: relative;
+    font-weight: 400;
+    transition: color var(--transition-base), background var(--transition-base);
   }
 
-  a:hover {
-    color: var(--color-text);
+  .nav-link::after {
+    display: none;
   }
 
-  a.active {
-    color: var(--color-text) !important;
+  .nav-link:hover {
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.05);
   }
 
-  a.active::after {
-    content: "";
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: var(--text-muted);
+  .nav-link.active {
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .nav-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 500;
+    background: var(--accent-gradient);
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+    transition: transform var(--transition-base);
+  }
+
+  .nav-cta::after {
+    display: none;
+  }
+
+  .nav-cta svg {
+    transition: transform var(--transition-base);
+  }
+
+  .nav-cta:hover {
+    transform: translateY(-1px);
+    animation-duration: 3s;
+  }
+
+  .nav-cta:hover svg {
+    transform: translate(2px, -2px);
+  }
+
+  @media (max-width: 640px) {
+    .nav {
+      gap: 0.5rem;
+      padding: 0.35rem 0.4rem 0.35rem 0.75rem;
+    }
+
+    .brand-text {
+      display: none;
+    }
+
+    .nav-link {
+      padding: 0.3rem 0.5rem;
+      font-size: var(--text-xs);
+    }
+
+    .nav-cta span,
+    .nav-search kbd {
+      display: none;
+    }
+
+    .nav-cta {
+      padding: 0.45rem;
+    }
   }
 </style>

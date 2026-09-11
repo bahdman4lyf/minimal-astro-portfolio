@@ -1,0 +1,48 @@
+---
+// Single shared toast. Anything on the page can show a message with
+// `window.dispatchEvent(new CustomEvent("toast", { detail: "Copied" }))`.
+---
+
+<div class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+  let timer = 0;
+  const show = (message: string) => {
+    const el = document.querySelector<HTMLElement>(".toast");
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+    el.classList.remove("is-in");
+    // Restart the entrance animation even when a toast is already showing.
+    void el.offsetWidth;
+    el.classList.add("is-in");
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      el.hidden = true;
+    }, 2200);
+  };
+  window.addEventListener("toast", (e) => show(String((e as CustomEvent).detail)));
+</script>
+
+<style>
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 90;
+    transform: translateX(-50%);
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    background: rgba(17, 17, 17, 0.85);
+    border: 1px solid var(--glass-border-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    color: var(--text-color);
+    font-size: var(--text-sm);
+    pointer-events: none;
+  }
+
+  .toast.is-in {
+    animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+</style>

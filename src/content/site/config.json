@@ -1,12 +1,102 @@
 {
   "home": {
     "name": "Nathan ~ Alias: Blank",
+    "seoName": "Nathaniel Joseph",
     "title": "Software Engineer — Mobile & Full-Stack Engineer",
+    "headline": "I build mobile products that *survive real devices.*",
+    "availability": "Available for new work",
     "introduction": "I build mobile products end to end — React Native apps shipped to the App Store and Play Store, and the Nest.js services behind them. The work that decides whether a product feels good happens in the messy middle: real-time location, networks that drop, and the state bugs that only surface on a real device.",
+    "stats": [
+      {
+        "value": 5,
+        "label": "Apps live on the stores"
+      },
+      {
+        "value": 1000,
+        "suffix": "+",
+        "label": "Users served"
+      },
+      {
+        "value": 7,
+        "label": "Teams shipped with"
+      }
+    ],
+    "services": [
+      {
+        "title": "Mobile engineering",
+        "description": "React Native and Expo apps on a single codebase, shipped to the App Store and Google Play with native-level parity on both platforms — including the parts that only break on real hardware.",
+        "tags": [
+          "React Native",
+          "Expo",
+          "Nativewind",
+          "EAS"
+        ]
+      },
+      {
+        "title": "Backend & real-time",
+        "description": "Nest.js services on PostgreSQL or MongoDB behind the app: auth, live location, proximity search, and the sync that keeps state honest across devices and dropped connections.",
+        "tags": [
+          "Nest.js",
+          "Node.js",
+          "PostgreSQL",
+          "MongoDB",
+          "Supabase"
+        ]
+      },
+      {
+        "title": "Frontend & design systems",
+        "description": "Next.js and Vue interfaces taken from Figma to shipped feature — reusable component libraries, form handling and dashboards that a team can keep maintaining after handoff.",
+        "tags": [
+          "Next.js",
+          "TypeScript",
+          "Vue / Nuxt",
+          "Zustand"
+        ]
+      }
+    ],
+    "principles": [
+      {
+        "title": "Test on the device, not the simulator",
+        "description": "Location, background tasks and flaky networks only misbehave on real hardware. I keep a drawer of test phones and ship against them."
+      },
+      {
+        "title": "Type safety at the boundaries",
+        "description": "Strict TypeScript from the API contract to the screen. Most bugs live where data changes shape, so that's where the guardrails go."
+      },
+      {
+        "title": "Parity is a feature",
+        "description": "iOS and Android ship together from one codebase. A platform lagging behind is a bug in the process, not a backlog item."
+      },
+      {
+        "title": "Own the messy middle",
+        "description": "Design handoff to store release — including the CI, the code review, and the 2 a.m. crash report."
+      }
+    ],
+    "faq": [
+      {
+        "q": "What does a typical engagement look like?",
+        "a": "Usually one of two shapes: I join an early team as the mobile or full-stack engineer and own a product surface end to end, or I come in for a defined build — a React Native app, a Nest.js backend, or both — and hand over a codebase with CI, docs and a release process. Either way, I ship to real devices and stores, not just staging."
+      },
+      {
+        "q": "Which stack do you reach for by default?",
+        "a": "TypeScript everywhere. React Native with Expo on mobile, Next.js on the web, Nest.js with PostgreSQL or MongoDB behind it, and Supabase when it lets a small team move faster. I'm not precious about tools — the existing codebase and the team's strengths matter more than my defaults."
+      },
+      {
+        "q": "Do you work across time zones?",
+        "a": "Yes. I'm based in Nigeria (WAT, UTC+1) and have shipped with teams in Europe and North America. I keep a generous overlap window, write things down so decisions don't wait on a meeting, and treat async as the default rather than the exception."
+      },
+      {
+        "q": "How do you handle iOS and Android parity?",
+        "a": "One codebase, one release train. Both platforms ship together, with platform-specific work kept behind small, well-named abstractions. If a platform falls behind, I treat it as a process bug and fix the process."
+      },
+      {
+        "q": "Are you open to full-time roles?",
+        "a": "Open to both full-time and contract work for mobile, frontend and full-stack roles — remote-first. Email is the fastest way to start the conversation."
+      }
+    ],
     "sections": {
-      "blog": {
-        "title": "Writing",
-        "viewAllText": "View all posts"
+      "services": {
+        "title": "What I do"
       },
       "projects": {
         "title": "Projects",
@@ -16,14 +106,18 @@
         "title": "Experience",
         "viewAllText": "View full résumé"
       },
+      "principles": {
+        "title": "How I work"
+      },
       "skills": {
         "title": "Skills & Tools"
       },
-      "education": {
-        "title": "Education"
+      "blog": {
+        "title": "Writing",
+        "viewAllText": "View all posts"
       },
-      "certifications": {
-        "title": "Certifications"
+      "faq": {
+        "title": "Working with me"
       },
       "contact": {
         "title": "Get in touch",
@@ -76,35 +170,10 @@
         ]
       }
     ],
-    "education": [
-      {
-        "school": "MIVA Open University",
-        "credential": "BSc Computer Science",
-        "location": "Abuja, NG",
-        "startDate": "2025-09-01",
-        "current": true
-      },
-      {
-        "school": "National Institute of Information Technology (NIIT)",
-        "credential": "Diploma in Frontend Development",
-        "location": "Abuja, NG",
-        "startDate": "2023-02-01",
-        "endDate": "2024-09-30"
-      }
-    ],
-    "certifications": [
-      {
-        "name": "HNG 11 Finalist",
-        "year": "2024"
-      },
-      {
-        "name": "Proficiency in Frontend Development",
-        "year": "2024"
-      }
-    ],
     "contact": {
       "email": "nathancodes05@gmail.com",
-      "location": "Nigeria — working remotely"
+      "location": "Nigeria — working remotely",
+      "timezone": "Africa/Lagos"
     },
     "socialLinks": [
       {

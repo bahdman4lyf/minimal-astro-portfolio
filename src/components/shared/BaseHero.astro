@@ -1,19 +1,70 @@
 ---
 interface Props {
   title: string;
+  /** Optional italic accent appended to the title. */
+  accent?: string;
   description: string;
+  kicker?: string;
+  count?: number;
+  countLabel?: string;
 }
 
-const { title, description } = Astro.props;
+const { title, accent, description, kicker, count, countLabel = "entries" } = Astro.props;
 ---
 
 <section class="hero">
-  <h1 data-reveal>{title}</h1>
-  <p class="subtitle" data-reveal style="--reveal-delay: 70ms">{description}</p>
+  {kicker && <span class="kicker" data-reveal>{kicker}</span>}
+  <h1 data-reveal style="--reveal-delay: 60ms">
+    {title}
+    {accent && <em>{accent}</em>}
+  </h1>
+  <p class="subtitle" data-reveal style="--reveal-delay: 120ms">
+    {description}
+    {count != null && (
+      <span class="count">
+        · {count} {countLabel}
+      </span>
+    )}
+  </p>
+  <slot />
 </section>
 
 <style>
   .hero {
-    padding: 4rem 0;
+    padding: 3.5rem 0 2.5rem;
+  }
+
+  .kicker {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0.75;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 5vw, 3rem);
+    line-height: 1.05;
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    font-size: var(--text-lg);
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .count {
+    opacity: 0.6;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 2.5rem 0 2rem;
+    }
   }
 </style>

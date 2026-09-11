@@ -1,130 +1,33 @@
 ---
 import { getCollection, render } from "astro:content";
 import type { GetStaticPaths } from "astro";
-import BaseLayout from "../../components/layout/BaseLayout.astro";
-import Container from "../../components/ui/Container.astro";
+import ArticleLayout from "../../components/layout/ArticleLayout.astro";
 
 export const getStaticPaths = (async () => {
-  const posts = await getCollection("blog");
-  return posts.map((post) => ({
+  const posts = (await getCollection("blog", ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
+    (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
+  );
+  // Neighbours in date order: "next" is the newer post, "prev" the older one.
+  return posts.map((post, i) => ({
     params: { slug: post.id },
-    props: { post },
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
   }));
 }) satisfies GetStaticPaths;
 
-const { post } = Astro.props;
+const { post, newer, older } = Astro.props;
 const { Content } = await render(post);
-
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description}>
-  <Container>
-    <article class="post">
-      <header>
-        <h1>{post.data.title}</h1>
-        <time datetime={post.data.publishedAt.toISOString()}>
-          {formatDate(post.data.publishedAt)}
-        </time>
-      </header>
-      <div class="content">
-        <Content />
-      </div>
-    </article>
-  </Container>
-</BaseLayout>
-
-<style>
-  /* Width and gutters come from <main> in global.css plus <Container>. The
-     `main` rules that used to live here never applied: <main> is rendered by
-     BaseLayout, so Astro's scoping meant the selector matched nothing. */
-  .post {
-    margin-top: 2rem;
-  }
-
-  header {
-    margin-bottom: 2rem;
-  }
-
-  h1 {
-    margin-bottom: 0.5rem;
-  }
-
-  time {
-    color: var(--text-muted);
-    font-size: var(--text-sm);
-  }
-
-  .content {
-    line-height: 1.7;
-  }
-
-  .content :global(h2) {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  .content :global(h3) {
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .content :global(p) {
-    margin-bottom: 1.25rem;
-  }
-
-  .content :global(img) {
-    border-radius: 0.5rem;
-    margin: 1.5rem 0;
-  }
-
-  .content :global(blockquote) {
-    border-left: 3px solid var(--border-color);
-    padding-left: 1.5rem;
-    margin: 1.5rem 0;
-    color: var(--text-muted);
-  }
-
-  .content :global(pre) {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    background: var(--hover-bg);
-    overflow-x: auto;
-    margin: 1.5rem 0;
-  }
-
-  .content :global(p) {
-    max-width: 100%;
-  }
-
-  .content :global(code) {
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-  }
-
-  .content :global(a) {
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
-  }
-
-  .content :global(ul),
-  .content :global(ol) {
-    margin: 1rem 0;
-    padding-left: 1.5rem;
-  }
-
-  .content :global(li) {
-    margin: 0.5rem 0;
-  }
-
-  /* Code blocks scroll inside their own box rather than widening the page. */
-  .content :global(pre) {
-    max-width: 100%;
-  }
-</style>
+<ArticleLayout
+  title={post.data.title}
+  description={post.data.description}
+  date={post.data.publishedAt}
+  kicker="Blog"
+  backHref="/blog"
+  backLabel="All posts"
+  body={post.body}
+  prev={older && { title: older.data.title, href: `/blog/${older.id}` }}
+  next={newer && { title: newer.data.title, href: `/blog/${newer.id}` }}
+>
+  <Content />
+</ArticleLayout>

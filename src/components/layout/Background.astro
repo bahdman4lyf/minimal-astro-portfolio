@@ -8,7 +8,6 @@
 <div class="backdrop" aria-hidden="true">
   <div class="aurora aurora-1"></div>
   <div class="aurora aurora-2"></div>
-  <div class="aurora aurora-3"></div>
 </div>
 
 <style>
@@ -25,8 +24,8 @@
   .aurora {
     position: absolute;
     border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.5;
+    filter: blur(100px);
+    opacity: 0.38;
     will-change: transform;
     /* Promote to its own layer so drifting never repaints the blur. */
     transform: translateZ(0);
@@ -54,17 +53,6 @@
     animation: drift-2 32s ease-in-out infinite;
   }
 
-  .aurora-3 {
-    bottom: -22vh;
-    left: 15vw;
-    width: 65vw;
-    height: 65vw;
-    max-width: 780px;
-    max-height: 780px;
-    background: radial-gradient(circle, rgba(123, 104, 238, 0.34), transparent 70%);
-    animation: drift-3 38s ease-in-out infinite;
-  }
-
   @keyframes drift-1 {
     0%,
     100% {
@@ -82,16 +70,6 @@
     }
     50% {
       transform: translate3d(-7vw, 8vh, 0) scale(0.94);
-    }
-  }
-
-  @keyframes drift-3 {
-    0%,
-    100% {
-      transform: translate3d(0, 0, 0) scale(0.96);
-    }
-    50% {
-      transform: translate3d(5vw, -6vh, 0) scale(1.1);
     }
   }
 

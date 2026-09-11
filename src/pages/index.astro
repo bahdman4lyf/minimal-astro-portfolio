@@ -100,10 +100,36 @@ const githubUrl = site.socialLinks?.find((l) => l.platform === "GitHub")?.url;
 const githubUser = githubUrl ? new URL(githubUrl).pathname.split("/").filter(Boolean)[0] : undefined;
 const portraitSrc = githubUser ? `https://github.com/${githubUser}.png?size=640` : "/me.png";
 
+// Home-page structured data: the site itself, and this page as a profile.
+const origin = Astro.site?.href ?? "/";
+const homeSchema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: site.seoName ?? site.name,
+    url: origin,
+    description: site.introduction,
+    inLanguage: "en",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    url: origin,
+    mainEntity: {
+      "@type": "Person",
+      name: site.seoName ?? site.name,
+      jobTitle: site.title,
+      url: origin,
+      sameAs: site.socialLinks?.map((l) => l.url),
+      knowsAbout: (site.skills ?? []).flatMap((g) => g.items),
+    },
+  },
+];
+
 let sectionIndex = 0;
 ---
 
-<BaseLayout title="Nathaniel Joseph | Mobile & Full-stack Engineer" description={site.introduction} wide>
+<BaseLayout title="Nathaniel Joseph | Mobile & Full-stack Engineer" description={site.introduction} wide schema={homeSchema}>
   <div class="cursor-glow" aria-hidden="true"></div>
 
   <!-- Section dock: scroll-spy rail on wide screens. -->

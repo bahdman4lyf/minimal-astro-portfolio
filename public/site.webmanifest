@@ -1,11 +1,27 @@
 {
-  "name": "Nathaniel Joseph — Mobile & Full-stack Engineer",
-  "short_name": "Nathaniel Joseph",
-  "icons": [
-    { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
-    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
-  ],
+  "name": "Nathaniel Joseph \u2014 Mobile & Full-Stack Engineer",
+  "short_name": "blank.",
+  "description": "Portfolio of Nathaniel Joseph: React Native apps and the Nest.js backends behind them.",
+  "start_url": "/",
+  "display": "standalone",
   "theme_color": "#111111",
   "background_color": "#111111",
-  "display": "standalone"
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }

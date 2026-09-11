@@ -34,6 +34,12 @@ interface Props {
   siteName?: string;
   /** Widens the content column — used by the landing page only. */
   wide?: boolean;
+  /** "article" adds published/modified times and switches og:type. */
+  type?: "website" | "article";
+  publishedAt?: Date;
+  modifiedAt?: Date;
+  /** Extra JSON-LD blocks (BlogPosting, BreadcrumbList, WebSite…). */
+  schema?: Record<string, unknown>[];
 }
 
 interface SocialLink {
@@ -43,10 +49,14 @@ interface SocialLink {
 const {
   title,
   description,
-  image = "/images/og-image.jpg",
+  image = "/images/og-image.png",
   canonicalURL = Astro.url,
   siteName,
   wide = false,
+  type = "website",
+  publishedAt,
+  modifiedAt,
+  schema = [],
 } = Astro.props;
 
 // Crawlers require an absolute og:image URL. `Astro.site` is only defined once
@@ -61,6 +71,10 @@ const brand = await getEntry("site", "home");
 const ogSiteName = siteName ?? brand?.data.seoName ?? brand?.data.name ?? Astro.site?.hostname ?? "Portfolio";
 const pageTitle = title.includes(ogSiteName) ? title : `${title} | ${ogSiteName}`;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : canonicalURL;
+// @handle for twitter:creator, derived from the social link so it can't drift.
+const twitterUrl = brand?.data.socialLinks?.find((l: { platform: string }) => /twitter|x/i.test(l.platform))?.url;
+const twitterHandle = twitterUrl ? `@${new URL(twitterUrl).pathname.split("/").filter(Boolean)[0]}` : undefined;
+
 const personSchema = brand?.data.contact
   ? {
       "@context": "https://schema.org",
@@ -72,8 +86,12 @@ const personSchema = brand?.data.contact
       email: `mailto:${brand.data.contact.email}`,
       homeLocation: brand.data.contact.location ? { "@type": "Place", name: brand.data.contact.location } : undefined,
       sameAs: brand.data.socialLinks?.map((link: SocialLink) => link.url),
+      image: Astro.site ? new URL("/images/og-image.png", Astro.site).href : undefined,
     }
   : undefined;
+
+// One script per block keeps each independently parseable by crawlers.
+const jsonLd = [personSchema, ...schema].filter(Boolean);
 ---
 
 <!doctype html>
@@ -85,6 +103,7 @@ const personSchema = brand?.data.contact
     <meta name="description" content={description} />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="theme-color" content="#111111" />
+    <meta name="author" content={ogSiteName} />
 
     <!-- Preload critical fonts -->
     <link rel="preload" href={interLightWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
@@ -99,7 +118,7 @@ const personSchema = brand?.data.contact
     <!-- Hero portrait is served live from GitHub. -->
     <link rel="preconnect" href="https://avatars.githubusercontent.com" crossorigin />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
     <meta property="og:site_name" content={ogSiteName} />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content={canonical} />
@@ -110,17 +129,28 @@ const personSchema = brand?.data.contact
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={`${title} — ${description}`} />
+    <meta property="og:image:type" content={ogImage.endsWith(".png") ? "image/png" : "image/jpeg"} />
+    {publishedAt && <meta property="article:published_time" content={publishedAt.toISOString()} />}
+    {(modifiedAt ?? publishedAt) && <meta property="article:modified_time" content={(modifiedAt ?? publishedAt)!.toISOString()} />}
+    {type === "article" && <meta property="article:author" content={ogSiteName} />}
 
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonical} />
     <meta property="twitter:title" content={pageTitle} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={ogImage} />
+    <meta property="twitter:image:alt" content={`${title} — ${description}`} />
+    {twitterHandle && <meta property="twitter:creator" content={twitterHandle} />}
+    {twitterHandle && <meta property="twitter:site" content={twitterHandle} />}
 
+    <!-- SVG first for browsers that support it; PNGs cover the rest. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    {personSchema && <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />}
+    <link rel="sitemap" href="/sitemap.xml" />
+    {jsonLd.map((block) => <script type="application/ld+json" set:html={JSON.stringify(block)} />)}
     <meta name="generator" content={Astro.generator} />
     <ClientRouter />
     <script is:inline>

@@ -3,7 +3,8 @@ import { getCollection } from "astro:content";
 
 export const prerender = true;
 
-const site = "https://bahdman.splash.ng";
+// Same origin as `site` in astro.config.ts, so the two can never drift.
+const site = import.meta.env.SITE;
 
 const xmlEscape = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&apos;");

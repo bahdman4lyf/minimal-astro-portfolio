@@ -761,7 +761,7 @@ let sectionIndex = 0;
         e.preventDefault();
         const target = document.getElementById(l.dataset.dockLink!);
         if (!target) return;
-        if (window.lenis) window.lenis.scrollTo(target, { offset: -88 });
+        if (window.__portfolioLenis) window.__portfolioLenis.scrollTo(target, { offset: -88 });
         else target.scrollIntoView({ behavior: reduced() ? "auto" : "smooth" });
         history.replaceState(null, "", `#${l.dataset.dockLink}`);
       }),

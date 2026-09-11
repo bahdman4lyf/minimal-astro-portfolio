@@ -36,6 +36,10 @@ interface Props {
   wide?: boolean;
 }
 
+interface SocialLink {
+  url: string;
+}
+
 const {
   title,
   description,
@@ -67,7 +71,7 @@ const personSchema = brand?.data.contact
       description: brand.data.introduction,
       email: `mailto:${brand.data.contact.email}`,
       homeLocation: brand.data.contact.location ? { "@type": "Place", name: brand.data.contact.location } : undefined,
-      sameAs: brand.data.socialLinks?.map((link) => link.url),
+      sameAs: brand.data.socialLinks?.map((link: SocialLink) => link.url),
     }
   : undefined;
 ---
@@ -165,12 +169,12 @@ const personSchema = brand?.data.contact
       // Skipped entirely for users who asked for reduced motion.
       declare global {
         interface Window {
-          lenis?: Lenis;
+          __portfolioLenis?: Lenis;
         }
       }
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 0.95, anchors: { offset: -88 } });
-        window.lenis = lenis;
+        window.__portfolioLenis = lenis;
         const raf = (time: number) => {
           lenis.raf(time);
           requestAnimationFrame(raf);
@@ -191,17 +195,17 @@ const personSchema = brand?.data.contact
       // reference is a local variable can be garbage collected once the function
       // returns — it then silently stops delivering entries, which strands every
       // not-yet-revealed element at opacity 0 forever.
-      let observer = null;
-      let pending = [];
+      let observer: IntersectionObserver | null = null;
+      let pending: Element[] = [];
       let lastSweep = 0;
 
-      const reveal = (el) => {
+      const reveal = (el: Element) => {
         el.classList.add("is-revealed");
         if (observer) observer.unobserve(el);
       };
 
       // Same test the observer makes, done by hand.
-      const isInView = (el) => el.getBoundingClientRect().top < window.innerHeight * 0.92;
+      const isInView = (el: Element) => el.getBoundingClientRect().top < window.innerHeight * 0.92;
 
       // Backstop for the observer: a missed observer callback can never leave
       // content invisible. Deliberately not driven by requestAnimationFrame —
@@ -231,7 +235,7 @@ const personSchema = brand?.data.contact
       };
 
       const revealTargets = () => {
-        const targets = [...document.querySelectorAll("[data-reveal]:not(.is-revealed)")];
+        const targets = [...document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-revealed)')];
         if (!targets.length) return;
 
         // No observer support (or reduced motion) — show everything at once.
@@ -240,7 +244,7 @@ const personSchema = brand?.data.contact
           return;
         }
 
-        observer = new IntersectionObserver(
+        const currentObserver = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
               // Reveal is one-way; `reveal` unobserves so scrolling stays cheap.
@@ -251,8 +255,9 @@ const personSchema = brand?.data.contact
           // thinnest sliver of visibility so short rows at the edge still count.
           { rootMargin: "0px 0px -8% 0px", threshold: 0.01 },
         );
+        observer = currentObserver;
 
-        targets.forEach((el) => observer.observe(el));
+        targets.forEach((el) => currentObserver.observe(el));
 
         pending = targets;
         window.addEventListener("scroll", onScroll, { passive: true });
@@ -269,10 +274,10 @@ const personSchema = brand?.data.contact
       // Coordinates are written as CSS variables; the gradient itself lives in CSS.
       const initSpotlight = () => {
         if (!fine()) return;
-        document.querySelectorAll("[data-spotlight]").forEach((card) => {
+        document.querySelectorAll<HTMLElement>("[data-spotlight]").forEach((card) => {
           if (card.dataset.spotlightReady) return;
           card.dataset.spotlightReady = "1";
-          card.addEventListener("pointermove", (e) => {
+          card.addEventListener("pointermove", (e: PointerEvent) => {
             const rect = card.getBoundingClientRect();
             card.style.setProperty("--mx", `${e.clientX - rect.left}px`);
             card.style.setProperty("--my", `${e.clientY - rect.top}px`);
@@ -283,10 +288,10 @@ const personSchema = brand?.data.contact
       // Magnetic buttons — nudge toward the pointer, spring back on leave.
       const initMagnetic = () => {
         if (!fine() || reduced()) return;
-        document.querySelectorAll("[data-magnetic]").forEach((el) => {
+        document.querySelectorAll<HTMLElement>("[data-magnetic]").forEach((el) => {
           if (el.dataset.magneticReady) return;
           el.dataset.magneticReady = "1";
-          el.addEventListener("pointermove", (e) => {
+          el.addEventListener("pointermove", (e: PointerEvent) => {
             const r = el.getBoundingClientRect();
             const x = (e.clientX - r.left - r.width / 2) * 0.18;
             const y = (e.clientY - r.top - r.height / 2) * 0.28;
@@ -300,7 +305,7 @@ const personSchema = brand?.data.contact
 
       // Copy-to-clipboard buttons announce through the shared toast.
       const initCopy = () => {
-        document.querySelectorAll("[data-copy]").forEach((btn) => {
+        document.querySelectorAll<HTMLElement>("[data-copy]").forEach((btn) => {
           if (btn.dataset.copyReady) return;
           btn.dataset.copyReady = "1";
           btn.addEventListener("click", async () => {

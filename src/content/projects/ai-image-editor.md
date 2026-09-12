@@ -4,4 +4,11 @@ description: "A couples' app that turns photos into paintable line art for two p
 url: "https://apps.apple.com/gb/app/lovla-couples-coloring-games/id6758548454"
 featured: true
 techs: ["React Native", "Expo", "Supabase", "Nativewind"]
+name: "Lovla"
+mock: "canvas"
+accent: "#a78bfa"
+stores: ["ios"]
+highlight: "Real-time shared canvas for two"
+role: "Mobile engineer"
+screenshots: ["/images/Lovla.png"]
 ---

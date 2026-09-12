@@ -1,0 +1,742 @@
+---
+// A phone frame with an illustrated app screen. Screens are drawn in CSS/SVG
+// so they stay crisp at any size and need no assets; pass `screenshot` to show
+// a real capture instead. `accent` tints the UI so each project reads distinct.
+interface Props {
+  variant?: "map" | "bank" | "lab" | "notes" | "canvas";
+  accent?: string;
+  name?: string;
+  screenshot?: string;
+  /** For a screenshot without its own status bar: the app's background colour.
+   *  The mock draws a light status bar in that colour above the capture. */
+  statusBar?: string;
+  class?: string;
+}
+
+const { variant = "map", accent = "#a78bfa", name = "App", screenshot, statusBar, class: className } = Astro.props;
+---
+
+<div
+  class:list={["phone", className, { "has-shot": Boolean(screenshot), "own-chrome": Boolean(screenshot && statusBar) }]}
+  style={`--app: ${accent}; --chrome-bg: ${statusBar ?? "transparent"}`}
+  aria-hidden="true"
+>
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="status">
+        <span class="status-time">9:41</span>
+        <span class="island"></span>
+        <span class="status-icons"><i></i><i></i><i class="bat"></i></span>
+      </div>
+
+      {
+        screenshot ? (
+          <img class="shot" src={screenshot} alt="" loading="lazy" />
+        ) : variant === "map" ? (
+          <div class="ui ui-map">
+            <div class="map">
+              <div class="roads" />
+              <span class="pin p1" /><span class="pin p2" /><span class="pin p3" />
+              <span class="me"><i /></span>
+            </div>
+            <div class="sheet">
+              <div class="grab" />
+              <div class="sheet-title">3 mechanics nearby</div>
+              <div class="row"><span class="avatar" /><span class="lines"><b>Tunde's Auto</b><em>0.8 km · 4.9 ★ · ETA 6 min</em></span><span class="cta">Call</span></div>
+              <div class="row"><span class="avatar a2" /><span class="lines"><b>Mecfur Garage</b><em>1.4 km · 4.7 ★ · ETA 9 min</em></span><span class="cta ghost">View</span></div>
+            </div>
+          </div>
+        ) : variant === "bank" ? (
+          <div class="ui ui-bank">
+            <div class="head"><span class="hi">Good morning,<b>Nathan</b></span><span class="bell" /></div>
+            <div class="card">
+              <span class="card-label">Available balance</span>
+              <span class="card-amt">₦1,240,500<small>.00</small></span>
+              <span class="card-acct">•••• 4821</span>
+            </div>
+            <div class="actions">
+              {["Send", "Airtime", "Bills", "Cards"].map((a) => (<span class="act"><i />{a}</span>))}
+            </div>
+            <div class="list-title">Recent</div>
+            <div class="row"><span class="avatar" /><span class="lines"><b>Transfer to Ada</b><em>Today · 09:12</em></span><span class="amt neg">-₦25,000</span></div>
+            <div class="row"><span class="avatar a2" /><span class="lines"><b>Salary</b><em>Yesterday</em></span><span class="amt pos">+₦850,000</span></div>
+            <div class="row"><span class="avatar a3" /><span class="lines"><b>MTN Airtime</b><em>Yesterday</em></span><span class="amt neg">-₦2,000</span></div>
+          </div>
+        ) : variant === "lab" ? (
+          <div class="ui ui-lab">
+            <div class="head"><span class="back" /><span class="title">Lipid panel</span></div>
+            <div class="verdict"><span class="dot ok" /><span><b>Bottom line:</b> mostly normal — one value to watch.</span></div>
+            <div class="metric"><span class="m-name">Total cholesterol</span><span class="bar"><i style="width:48%" class="ok" /></span><span class="m-val">182</span></div>
+            <div class="metric"><span class="m-name">LDL</span><span class="bar"><i style="width:72%" class="warn" /></span><span class="m-val">138</span></div>
+            <div class="metric"><span class="m-name">HDL</span><span class="bar"><i style="width:40%" class="ok" /></span><span class="m-val">58</span></div>
+            <div class="metric"><span class="m-name">Triglycerides</span><span class="bar"><i style="width:30%" class="ok" /></span><span class="m-val">96</span></div>
+            <div class="q">Should I change my diet?</div>
+            <div class="q">Do I need a follow-up?</div>
+            <div class="cta-wide">Ask a clinician</div>
+          </div>
+        ) : variant === "notes" ? (
+          <div class="ui ui-notes">
+            <div class="head"><span class="title">Today</span><span class="streak">🔥 12 days</span></div>
+            <div class="note">
+              <b>Standup notes</b>
+              <span class="wave">{Array.from({ length: 22 }).map((_, i) => (<i style={`--h:${30 + ((i * 37) % 60)}%`} />))}</span>
+              <em>Transcribed · 0:42</em>
+            </div>
+            <div class="note">
+              <b>Ideas for onboarding</b>
+              <p>Cut the walkthrough to two screens, ask for mic access only when…</p>
+            </div>
+            <div class="friends"><span class="avatar" /><span class="avatar a2" /><span class="avatar a3" /><em>3 friends kept their streak</em></div>
+            <span class="mic" />
+          </div>
+        ) : (
+          <div class="ui ui-canvas">
+            <div class="head"><span class="title">Coloring together</span><span class="live"><i />Ada is here</span></div>
+            <svg class="art" viewBox="0 0 200 240">
+              <path d="M40 200c-30-40-20-110 30-140 40-25 90-10 100 40 12 55-30 100-70 105-25 3-45-3-60-5z" fill="var(--app)" fill-opacity=".35" stroke="#1b1b1f" stroke-width="3" />
+              <path d="M70 90c20-30 60-30 75 0 10 22-5 50-35 55-28 5-55-25-40-55z" fill="#f472b6" fill-opacity=".5" stroke="#1b1b1f" stroke-width="3" />
+              <path d="M95 140c15-8 35-4 40 12 4 15-10 30-25 28-18-2-30-28-15-40z" fill="#fbbf24" fill-opacity=".55" stroke="#1b1b1f" stroke-width="3" />
+              <path d="M55 150c-12 2-24 20-14 36 8 13 30 10 36-6 5-13-8-32-22-30z" fill="none" stroke="#1b1b1f" stroke-width="3" />
+              <circle cx="150" cy="60" r="16" fill="none" stroke="#1b1b1f" stroke-width="3" />
+              <circle cx="152" cy="200" r="9" fill="#60a5fa" fill-opacity=".8" />
+            </svg>
+            <div class="palette">{["#a78bfa", "#f472b6", "#fbbf24", "#34d399", "#60a5fa", "#f87171"].map((c, i) => (<i style={`background:${c}`} class={i === 0 ? "on" : ""} />))}</div>
+          </div>
+        )
+      }
+
+      <div class="home-bar"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .phone {
+    /* Pages size the device through --phone-w; --w is the internal unit. */
+    --w: var(--phone-w, 270px);
+    width: var(--w);
+    aspect-ratio: 9 / 19.2;
+    position: relative;
+    flex: none;
+  }
+
+  .phone-frame {
+    position: absolute;
+    inset: 0;
+    border-radius: calc(var(--w) * 0.16);
+    background: #0b0b0d;
+    padding: calc(var(--w) * 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.8), inset 0 0 0 3px #1c1c21;
+  }
+
+  /* Side buttons */
+  .phone-frame::before,
+  .phone-frame::after {
+    content: "";
+    position: absolute;
+    width: 3px;
+    border-radius: 2px;
+    background: #2a2a30;
+  }
+
+  .phone-frame::before {
+    left: -3px;
+    top: 22%;
+    height: 12%;
+  }
+
+  .phone-frame::after {
+    right: -3px;
+    top: 28%;
+    height: 16%;
+  }
+
+  .phone-screen {
+    position: relative;
+    height: 100%;
+    border-radius: calc(var(--w) * 0.13);
+    background: #141418;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-primary);
+    color: #f4f4f5;
+    font-size: calc(var(--w) * 0.04);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .shot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 0;
+    z-index: 0;
+  }
+
+  /* A real capture already has its own status bar and home indicator. */
+  .has-shot .status,
+  .has-shot .home-bar {
+    display: none;
+  }
+
+  /* …unless it was cropped without one: draw a light status bar in the app's
+     own background colour and start the capture underneath it. */
+  .phone.own-chrome .status {
+    display: flex;
+    background: var(--chrome-bg);
+    color: #111;
+    padding-bottom: calc(var(--w) * 0.03);
+  }
+
+  .phone.own-chrome .status-icons i {
+    background: #111;
+  }
+
+  .phone.own-chrome .shot {
+    top: calc(var(--w) * 0.135);
+    /* Show the whole capture; any slack is filled with the app's own background. */
+    object-fit: contain;
+    background: var(--chrome-bg);
+  }
+
+  /* Status bar + island */
+  .status {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: calc(var(--w) * 0.045) calc(var(--w) * 0.08) 0;
+    font-size: calc(var(--w) * 0.042);
+    font-weight: 600;
+  }
+
+  .island {
+    position: absolute;
+    left: 50%;
+    top: calc(var(--w) * 0.035);
+    width: calc(var(--w) * 0.3);
+    height: calc(var(--w) * 0.085);
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: #050506;
+  }
+
+  .status-icons {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .status-icons i {
+    width: 5px;
+    height: 8px;
+    border-radius: 1px;
+    background: #f4f4f5;
+  }
+
+  .status-icons i:first-child {
+    height: 6px;
+    opacity: 0.8;
+  }
+
+  .status-icons .bat {
+    width: 16px;
+    border-radius: 3px;
+    height: 8px;
+    background: linear-gradient(90deg, #4ade80 0 75%, rgba(255, 255, 255, 0.35) 75%);
+  }
+
+  .home-bar {
+    position: absolute;
+    z-index: 3;
+    bottom: calc(var(--w) * 0.03);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 35%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.85);
+  }
+
+  .ui {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--w) * 0.03);
+    padding: calc(var(--w) * 0.05) calc(var(--w) * 0.06) calc(var(--w) * 0.14);
+    min-height: 0;
+  }
+
+  /* Shared primitives */
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .title {
+    font-weight: 600;
+    font-size: calc(var(--w) * 0.06);
+    letter-spacing: -0.02em;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--w) * 0.03);
+    padding: calc(var(--w) * 0.03) 0;
+  }
+
+  .row + .row {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .avatar {
+    width: calc(var(--w) * 0.11);
+    height: calc(var(--w) * 0.11);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--app), rgba(255, 255, 255, 0.2));
+    flex: none;
+  }
+
+  .avatar.a2 {
+    background: linear-gradient(135deg, #f472b6, #fbbf24);
+  }
+
+  .avatar.a3 {
+    background: linear-gradient(135deg, #60a5fa, #34d399);
+  }
+
+  .lines {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .lines b {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lines em,
+  .ui em {
+    font-style: normal;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85em;
+  }
+
+  .cta {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--app);
+    color: #0b0b0d;
+    font-weight: 600;
+    font-size: 0.85em;
+  }
+
+  .cta.ghost {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f4f4f5;
+  }
+
+  /* ---- Map ---- */
+  .ui-map {
+    padding: 0;
+    gap: 0;
+  }
+
+  .map {
+    position: relative;
+    flex: 1;
+    background: #0f1512;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .roads {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(115deg, transparent 46%, #1f2a24 46% 50%, transparent 50%),
+      linear-gradient(20deg, transparent 58%, #1f2a24 58% 62%, transparent 62%),
+      linear-gradient(0deg, transparent 30%, #1a221e 30% 33%, transparent 33%),
+      radial-gradient(circle at 70% 25%, #17211c 0 18%, transparent 19%);
+  }
+
+  .pin {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--app);
+    transform: rotate(-45deg);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  }
+
+  .p1 {
+    left: 28%;
+    top: 30%;
+  }
+  .p2 {
+    left: 62%;
+    top: 48%;
+  }
+  .p3 {
+    left: 40%;
+    top: 68%;
+  }
+
+  .me {
+    position: absolute;
+    left: 50%;
+    top: 55%;
+    width: 12px;
+    height: 12px;
+    margin: -6px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 2px solid #fff;
+  }
+
+  .me i {
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 1.5px solid #60a5fa;
+    animation: pulse-ring 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  .sheet {
+    background: #17171b;
+    border-radius: 18px 18px 0 0;
+    padding: 8px 14px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .grab {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 auto 8px;
+  }
+
+  .sheet-title {
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-bottom: 4px;
+  }
+
+  /* ---- Bank ---- */
+  .hi {
+    display: flex;
+    flex-direction: column;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.9em;
+  }
+
+  .hi b {
+    color: #f4f4f5;
+    font-size: 1.35em;
+    font-weight: 600;
+  }
+
+  .bell {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--app), color-mix(in srgb, var(--app) 40%, #111));
+    color: #0b0b0d;
+  }
+
+  .card-label {
+    font-size: 0.8em;
+    opacity: 0.8;
+  }
+
+  .card-amt {
+    font-size: 1.7em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .card-amt small {
+    font-size: 0.6em;
+    font-weight: 500;
+  }
+
+  .card-acct {
+    font-size: 0.8em;
+    opacity: 0.8;
+    font-family: var(--font-mono);
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .act {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .act i {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .list-title {
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .amt {
+    font-weight: 600;
+    font-size: 0.9em;
+    white-space: nowrap;
+  }
+
+  .amt.pos {
+    color: #4ade80;
+  }
+
+  /* ---- Lab ---- */
+  .back {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .verdict {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.9em;
+  }
+
+  .verdict b {
+    font-weight: 600;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+    margin-top: 3px;
+  }
+
+  .dot.ok,
+  .bar i.ok {
+    background: #4ade80;
+  }
+
+  .bar i.warn {
+    background: #fbbf24;
+  }
+
+  .metric {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85em;
+  }
+
+  .bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .bar i {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .m-val {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  .q {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .cta-wide {
+    margin-top: auto;
+    text-align: center;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--app);
+    color: #0b0b0d;
+    font-weight: 600;
+  }
+
+  /* ---- Notes ---- */
+  .streak {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.15);
+    color: #fde68a;
+  }
+
+  .note {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .note b {
+    font-weight: 600;
+  }
+
+  .note p {
+    margin: 0;
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
+  }
+
+  .wave {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 22px;
+  }
+
+  .wave i {
+    flex: 1;
+    height: var(--h);
+    border-radius: 2px;
+    background: var(--app);
+    opacity: 0.85;
+  }
+
+  .friends {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: auto;
+  }
+
+  .friends .avatar {
+    width: 22px;
+    height: 22px;
+    margin-right: -8px;
+    border: 2px solid #141418;
+  }
+
+  .friends em {
+    margin-left: 12px;
+    font-size: 0.8em;
+  }
+
+  .mic {
+    position: absolute;
+    right: 16px;
+    bottom: 34px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--app);
+    box-shadow: 0 8px 20px -8px var(--app);
+  }
+
+  .mic::after {
+    content: "";
+    position: absolute;
+    inset: 15px 18px;
+    border-radius: 6px;
+    background: #0b0b0d;
+  }
+
+  /* ---- Canvas ---- */
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .live i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+  }
+
+  .art {
+    flex: 1;
+    width: 100%;
+    border-radius: 14px;
+    background: #f7f4ee;
+    padding: 6px;
+  }
+
+  .palette {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .palette i {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+
+  .palette i.on {
+    border-color: #fff;
+    transform: scale(1.15);
+  }
+</style>

@@ -340,9 +340,9 @@ const jsonLd = [personSchema, ...schema].filter(Boolean);
           btn.addEventListener("click", async () => {
             try {
               await navigator.clipboard.writeText(btn.dataset.copy ?? "");
-              window.dispatchEvent(new CustomEvent("toast", { detail: "Copied to clipboard" }));
+              window.dispatchEvent(new CustomEvent("toast", { detail: { message: "Copied to clipboard", type: "success" } }));
             } catch {
-              window.dispatchEvent(new CustomEvent("toast", { detail: "Couldn't copy — select it instead" }));
+              window.dispatchEvent(new CustomEvent("toast", { detail: { message: "Couldn't copy — select it instead", type: "error" } }));
             }
           });
         });

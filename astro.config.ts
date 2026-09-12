@@ -12,4 +12,10 @@ export default defineConfig({
   adapter: vercel(),
   prefetch: true,
   compressHTML: true,
+  vite: {
+    server: {
+      // Build output is huge; watching it makes the dev server lag behind edits.
+      watch: { ignored: ["**/.vercel/**", "**/dist/**"] },
+    },
+  },
 });

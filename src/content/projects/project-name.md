@@ -4,4 +4,11 @@ description: "AI note-taking app (speech transcription, social streaks) built on
 url: "https://apps.apple.com/ng/app/9lives-social-productivity/id6752275333"
 featured: true
 techs: ["React Native", "TypeScript", "Supabase", "Nativewind", "Groq"]
+name: "9Lives"
+mock: "notes"
+accent: "#fbbf24"
+stores: ["ios"]
+highlight: "AI notes with speech transcription"
+role: "Mobile engineer"
+screenshots: ["/images/9lives.png"]
 ---

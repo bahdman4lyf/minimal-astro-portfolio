@@ -4,4 +4,11 @@ description: "A live-location finder app that matches users with nearby service 
 url: "https://www.mecfur.com/"
 featured: true
 techs: ["React Native", "Expo", "Nest.js", "MongoDB", "Live location"]
+name: "Mecfur"
+mock: "map"
+accent: "#34d399"
+stores: ["android"]
+highlight: "Live GPS matching, built end to end"
+role: "Backend + mobile, end to end"
+screenshots: ["/images/Mecfur.png"]
 ---

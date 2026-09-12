@@ -1,48 +1,214 @@
 ---
-// Single shared toast. Anything on the page can show a message with
-// `window.dispatchEvent(new CustomEvent("toast", { detail: "Copied" }))`.
+// Shared notifications. Fire one from anywhere with
+//   window.dispatchEvent(new CustomEvent("toast", { detail: "Copied" }))
+// or with a variant:
+//   window.dispatchEvent(new CustomEvent("toast", { detail: { message: "Sent", type: "success" } }))
+// Types: "info" (default) | "success" | "error". Toasts stack, auto-dismiss
+// after a few seconds (paused while hovered), and can be clicked away.
 ---
 
-<div class="toast" role="status" aria-live="polite" hidden></div>
+<div class="toasts" data-toasts aria-live="polite" aria-relevant="additions"></div>
 
 <script>
-  let timer = 0;
-  const show = (message: string) => {
-    const el = document.querySelector<HTMLElement>(".toast");
-    if (!el) return;
-    el.textContent = message;
-    el.hidden = false;
-    el.classList.remove("is-in");
-    // Restart the entrance animation even when a toast is already showing.
-    void el.offsetWidth;
-    el.classList.add("is-in");
-    window.clearTimeout(timer);
-    timer = window.setTimeout(() => {
-      el.hidden = true;
-    }, 2200);
+  type ToastType = "info" | "success" | "error";
+  type ToastDetail = string | { message: string; type?: ToastType; duration?: number };
+
+  const ICONS: Record<ToastType, string> = {
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8h.01M12 12v5"/><circle cx="12" cy="12" r="9"/></svg>',
   };
-  window.addEventListener("toast", (e) => show(String((e as CustomEvent).detail)));
+
+  const host = document.querySelector<HTMLElement>("[data-toasts]");
+
+  const show = (detail: ToastDetail) => {
+    if (!host) return;
+    const { message, type = "info", duration = 3200 } =
+      typeof detail === "string" ? { message: detail } : detail;
+    if (!message) return;
+
+    const el = document.createElement("div");
+    el.className = `toast toast-${type}`;
+    el.setAttribute("role", type === "error" ? "alert" : "status");
+    el.style.setProperty("--dur", `${duration}ms`);
+    el.innerHTML = `
+      <span class="toast-icon" aria-hidden="true">${ICONS[type]}</span>
+      <span class="toast-text"></span>
+      <button type="button" class="toast-close" aria-label="Dismiss">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <span class="toast-bar" aria-hidden="true"></span>`;
+    el.querySelector(".toast-text")!.textContent = message;
+
+    // Keep the stack short: oldest goes when a fourth arrives.
+    while (host.children.length >= 3) dismiss(host.firstElementChild as HTMLElement, true);
+    host.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("is-in"));
+
+    // The timer bar's animation end is the dismiss signal; hovering pauses
+    // both the bar and the timer, so the visual always matches the behaviour.
+    const bar = el.querySelector<HTMLElement>(".toast-bar")!;
+    bar.addEventListener("animationend", () => dismiss(el));
+    el.querySelector(".toast-close")!.addEventListener("click", () => dismiss(el));
+    el.addEventListener("click", (e) => {
+      if (!(e.target as HTMLElement).closest(".toast-close")) dismiss(el);
+    });
+  };
+
+  const dismiss = (el: HTMLElement, instant = false) => {
+    if (!el || el.classList.contains("is-out")) return;
+    el.classList.add("is-out");
+    if (instant) return el.remove();
+    el.addEventListener("transitionend", () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 400);
+  };
+
+  window.addEventListener("toast", (e) => show((e as CustomEvent<ToastDetail>).detail));
 </script>
 
-<style>
-  .toast {
+<style is:global>
+  /* Global on purpose: toasts are built by the script above, so they'd miss
+     Astro's scoped attribute. Every selector here is .toast-prefixed. */
+  .toasts {
     position: fixed;
     left: 50%;
     bottom: 1.5rem;
     z-index: 90;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: min(100% - 2rem, 420px);
     transform: translateX(-50%);
-    padding: 0.6rem 1rem;
-    border-radius: 999px;
-    background: rgba(17, 17, 17, 0.85);
-    border: 1px solid var(--glass-border-strong);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    color: var(--text-color);
-    font-size: var(--text-sm);
     pointer-events: none;
   }
 
+  .toast {
+    --tone: var(--accent);
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 0.6rem 0.75rem 0.75rem;
+    border-radius: 1rem;
+    border: 1px solid var(--glass-border-strong);
+    background: rgba(17, 17, 17, 0.82);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-highlight);
+    color: var(--text-color);
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    overflow: hidden;
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   .toast.is-in {
-    animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    opacity: 1;
+    transform: none;
+  }
+
+  .toast.is-out {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    pointer-events: none;
+  }
+
+  .toast-success {
+    --tone: var(--success);
+  }
+
+  .toast-error {
+    --tone: #f87171;
+  }
+
+  .toast-icon {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+    flex: none;
+  }
+
+  .toast-icon svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .toast-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .toast-close {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background var(--transition-base), color var(--transition-base);
+  }
+
+  .toast-close svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  .toast-close:hover {
+    background: var(--glass-bg-strong);
+    color: var(--text-color);
+  }
+
+  /* Timer: drains left-to-right, then fires animationend to dismiss. */
+  .toast-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--tone);
+    transform-origin: left;
+    animation: toast-drain var(--dur, 3200ms) linear forwards;
+  }
+
+  .toast:hover .toast-bar {
+    animation-play-state: paused;
+  }
+
+  @keyframes toast-drain {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast {
+      transition: opacity 0.2s ease;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .toasts {
+      bottom: 1rem;
+    }
   }
 </style>

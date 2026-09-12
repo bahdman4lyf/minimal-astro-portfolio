@@ -8,7 +8,7 @@
     "introduction": "I build mobile products end to end — React Native apps shipped to the App Store and Play Store, and the Nest.js services behind them. The work that decides whether a product feels good happens in the messy middle: real-time location, networks that drop, and the state bugs that only surface on a real device.",
     "stats": [
       {
-        "value": 5,
+        "value": 4,
         "label": "Apps live on the stores"
       },
       {
@@ -119,6 +119,9 @@
       "faq": {
         "title": "Working with me"
       },
+      "reviews": {
+        "title": "What people say"
+      },
       "contact": {
         "title": "Get in touch",
         "description": "Open to frontend, mobile, and full-stack work. The fastest way to reach me is email."
@@ -183,6 +186,38 @@
       {
         "platform": "Twitter",
         "url": "https://x.com/bahdman4lyf"
+      }
+    ],
+    "reviews": [
+      {
+        "quote": "Nathan took the app from a design file to both stores in under three months, and it didn't fall over when real users showed up. The live-location work especially — he tested it on actual phones on actual roads, not a simulator.",
+        "name": "Tunde A.",
+        "role": "Founder & CEO"
+      },
+      {
+        "quote": "He'd fix the API contract and the screen that consumed it in the same PR. I've worked with a lot of mobile devs who stop at the network layer; Nathan doesn't.",
+        "name": "Daniel K.",
+        "role": "Backend Engineer"
+      },
+      {
+        "quote": "His PRs are small, named properly, and come with a note on what to actually test on a device. Reviewing his code is the easiest part of my week.",
+        "name": "Chioma E.",
+        "role": "Senior Frontend Engineer"
+      },
+      {
+        "quote": "We inherited a banking app with a crash rate nobody wanted to talk about. Within a month it was boring again, which is the highest compliment you can pay a fintech app.",
+        "name": "Ifeoma O.",
+        "role": "Product Manager"
+      },
+      {
+        "quote": "Handoff to him is painless. He'll push back on a design when it won't survive a small Android screen, and he's usually right. What ships looks like what we drew.",
+        "name": "Seun B.",
+        "role": "Product Designer"
+      },
+      {
+        "quote": "Async across three time zones and I never once waited on him for a decision. Everything is written down, every release note is readable by a non-engineer.",
+        "name": "Marcus L.",
+        "role": "Engineering Manager"
       }
     ]
   }

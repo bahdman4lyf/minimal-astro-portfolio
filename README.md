@@ -48,6 +48,18 @@ To style the widget without real credentials, set `SPOTIFY_MOCK=1` in `.env` ins
 
 Visitors can listen along: the dock drives Spotify's official [Embed iFrame API](https://developer.spotify.com/documentation/embeds/references/iframe-api), which streams the full track to visitors signed in to Spotify in their browser (and seeks them to the same point I'm at). Spotify only licenses a 30-second excerpt for anonymous listeners — the dock detects that case, says so, and offers a sign-in link; when the visitor comes back, the player rebuilds itself and switches to the full song. The album art is the play/pause button; the ⤢ button reveals the official Spotify player. Playback tries to start on load and, because browsers block sound until the visitor interacts, otherwise starts on their first click or keypress. Once a visitor pauses, the site stays quiet for the rest of their session.
 
+## Contact form
+
+Messages from the contact form are sent to your inbox with [EmailJS](https://www.emailjs.com) directly from the browser — no server involved.
+
+1. In EmailJS, add an **Email Service** (Gmail works; connect `nathancodes05@gmail.com`) and note the Service ID.
+2. Create an **Email Template**. Set *To Email* to your address, *Reply To* to `{{email}}`, and use these variables in the subject/body: `{{title}}` (the topic), `{{name}}`, `{{email}}`, `{{time}}`, `{{message}}` — the default "Contact Us" template already does. Note the Template ID.
+3. Copy your **Public Key** from Account → API Keys.
+4. Put all three in `.env` as `PUBLIC_EMAILJS_PUBLIC_KEY`, `PUBLIC_EMAILJS_SERVICE_ID`, `PUBLIC_EMAILJS_TEMPLATE_ID`, and add the same three variables on Vercel, then redeploy. Restart `pnpm dev` after editing `.env`.
+5. In the EmailJS dashboard, restrict the key to your domain (Account → Security → Allowed origins) so nobody can send through it from elsewhere.
+
+Without the three values the form falls back to opening the visitor's mail app. Submissions include a hidden honeypot field to drop bot spam.
+
 ## Keyboard shortcuts
 
 - `⌘K` / `Ctrl+K` or `/` — open search (every post, note, bookmark and page)

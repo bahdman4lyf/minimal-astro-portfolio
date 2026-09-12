@@ -128,7 +128,7 @@ const schema = [
           return;
         }
         await navigator.clipboard.writeText(url);
-        window.dispatchEvent(new CustomEvent("toast", { detail: "Link copied" }));
+        window.dispatchEvent(new CustomEvent("toast", { detail: { message: "Link copied", type: "success" } }));
       } catch {
         /* user dismissed the share sheet — nothing to report */
       }

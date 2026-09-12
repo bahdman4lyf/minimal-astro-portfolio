@@ -36,9 +36,26 @@ const projects = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    url: z.string().url(),
+    /** Optional while a project is unreleased. */
+    url: z.string().url().optional(),
+    status: z.enum(["live", "in-progress"]).optional().default("live"),
     featured: z.boolean().optional().default(false),
     techs: z.array(z.string()).optional(),
+    /** Short name shown as the app title on the mock device and as the slide label. */
+    name: z.string().optional(),
+    /** Which illustrated screen the phone mock shows when there's no screenshot. */
+    mock: z.enum(["map", "bank", "lab", "notes", "canvas"]).optional(),
+    /** Paths under /public to real screenshots. The first replaces the
+     *  illustration on the device; a second, if present, sits behind it. */
+    screenshots: z.array(z.string()).optional(),
+    /** App background colour, when the screenshot has no status bar of its own. */
+    statusBar: z.string().optional(),
+    accent: z.string().optional(),
+    stores: z.array(z.enum(["ios", "android", "web"])).optional(),
+    /** One-line outcome or highlight, e.g. "1,000+ users". */
+    highlight: z.string().optional(),
+    /** What I did on it, for the spec table. */
+    role: z.string().optional(),
   }),
 });
 
@@ -97,6 +114,7 @@ const site = defineCollection({
       principles: plainSection.optional(),
       skills: plainSection.optional(),
       faq: plainSection.optional(),
+      reviews: plainSection.optional(),
       contact: plainSection.extend({ description: z.string() }).optional(),
     }),
     skills: z
@@ -104,6 +122,17 @@ const site = defineCollection({
         z.object({
           category: z.string(),
           items: z.array(z.string()),
+        }),
+      )
+      .optional(),
+    reviews: z
+      .array(
+        z.object({
+          quote: z.string(),
+          name: z.string(),
+          role: z.string(),
+          company: z.string().optional(),
+          url: z.string().url().optional(),
         }),
       )
       .optional(),

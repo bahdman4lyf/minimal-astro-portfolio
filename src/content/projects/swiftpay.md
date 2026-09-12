@@ -4,4 +4,11 @@ description: "The customer app for SwiftPay Microfinance Bank, live on the App S
 url: "https://swiftpaymfb.com/"
 featured: true
 techs: ["React Native", "TypeScript", "Fintech", "iOS + Android"]
+name: "SwiftPay"
+mock: "bank"
+accent: "#60a5fa"
+stores: ["ios", "android"]
+highlight: "Production fintech app, maintained daily"
+role: "Maintainer — production app"
+screenshots: ["/images/Swiftpay.png"]
 ---

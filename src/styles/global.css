@@ -117,9 +117,12 @@ main {
   overflow-x: clip;
 }
 
-/* The landing page opts into a wider canvas; every other page stays narrow. */
+/* The landing page opts into a wider canvas; every other page stays narrow.
+   It also needs full-bleed sections, so it must not clip its own overflow —
+   body's clip still guards against horizontal scroll. */
 .site.wide main {
   max-width: 1160px;
+  overflow-x: visible;
 }
 
 .nav-container {

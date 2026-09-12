@@ -6,7 +6,7 @@ import BaseLayout from "../components/layout/BaseLayout.astro";
 import Container from "../components/ui/Container.astro";
 import PhoneMock from "../components/ui/PhoneMock.astro";
 // `?url` makes Vite emit the file as a build asset and hand back its public path.
-import resumeUrl from "../assets/docs/Nathaniel Joseph - Frontend- CV.docx?url";
+import resumeUrl from "../assets/docs/Mobile Resume - Nathaniel Joseph.pdf?url";
 
 const siteConfig = await getEntry("site", "home");
 if (!siteConfig) {
@@ -207,7 +207,7 @@ let sectionIndex = 0;
               </a>
             )
           }
-          <a class="btn btn-ghost" href={resumeUrl} download="Nathaniel Joseph - Frontend Developer CV.docx" data-magnetic>
+          <a class="btn btn-ghost" href={resumeUrl} download="Nathaniel Joseph - Mobile Engineer Resume.pdf" data-magnetic>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
             </svg>
@@ -478,7 +478,7 @@ let sectionIndex = 0;
           <span class="kicker">{pad(++sectionIndex)} — {site.sections.experience.title}</span>
           <h2>{sortedExperiences.length} teams, <em>one throughline</em></h2>
         </div>
-        <a class="text-link" href={resumeUrl} download="Nathaniel Joseph - Frontend Developer CV.docx">
+        <a class="text-link" href={resumeUrl} download="Nathaniel Joseph - Mobile Engineer Resume.pdf">
           {site.sections.experience.viewAllText}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" />

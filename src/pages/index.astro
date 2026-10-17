@@ -60,7 +60,7 @@ const splitRole = (title: string) => {
 
 const projects = await getCollection("projects");
 // Newest first so the two most recent shipped apps lead the grid.
-const projectOrder = ["mecfur", "swiftpay", "clinsign-mobile-app", "project-name", "ai-image-editor", "ambufur", "flowna", "mykudi"];
+const projectOrder = ["mecfur", "clinsign-mobile-app", "project-name", "ai-image-editor", "ambufur", "flowna", "mykudi"];
 const featuredProjects = projects
   .filter((project: CollectionEntry<"projects">) => project.data.featured)
   .sort((a: CollectionEntry<"projects">, b: CollectionEntry<"projects">) => {

@@ -4,7 +4,6 @@
     "seoName": "Nathaniel Joseph",
     "title": "Software Engineer — Mobile & Full-Stack Engineer",
     "headline": "I build mobile products that *survive real devices.*",
-    "availability": "Available for new work",
     "introduction": "I build mobile products end to end — React Native apps shipped to the App Store and Play Store, and the Nest.js services behind them. The work that decides whether a product feels good happens in the messy middle: real-time location, networks that drop, and the state bugs that only surface on a real device.",
     "stats": [
       {
@@ -90,8 +89,8 @@
         "a": "One codebase, one release train. Both platforms ship together, with platform-specific work kept behind small, well-named abstractions. If a platform falls behind, I treat it as a process bug and fix the process."
       },
       {
-        "q": "Are you open to full-time roles?",
-        "a": "Open to both full-time and contract work for mobile, frontend and full-stack roles — remote-first. Email is the fastest way to start the conversation."
+        "q": "Are you taking on new work?",
+        "a": "Not at the moment. I'm not taking on new roles or contracts right now, but you're still welcome to email if you want to say hello."
       }
     ],
     "sections": {
@@ -124,7 +123,7 @@
       },
       "contact": {
         "title": "Get in touch",
-        "description": "Open to frontend, mobile, and full-stack work. The fastest way to reach me is email."
+        "description": "Not taking on new work right now, but always happy to talk shop. The fastest way to reach me is email."
       }
     },
     "skills": [

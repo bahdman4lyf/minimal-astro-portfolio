@@ -78,7 +78,6 @@ const site = defineCollection({
     introduction: z.string(),
     /** Hero headline. Wrap one phrase in *asterisks* to render it as the italic accent. */
     headline: z.string().optional(),
-    availability: z.string().optional(),
     /** Extra hero figures. "Years shipping" is derived from experience and always shown first. */
     stats: z
       .array(

@@ -164,15 +164,6 @@ let sectionIndex = 0;
     <section class="hero" id="top">
       <div class="hero-copy">
         <p class="eyebrow" data-reveal>
-          {
-            site.availability && (
-              <span class="status">
-                <span class="status-dot" aria-hidden="true" />
-                <span class="status-text">{site.availability}</span>
-              </span>
-            )
-          }
-          {site.contact?.location && <span class="eyebrow-sep">·</span>}
           {site.contact?.location && <span>{site.contact.location}</span>}
         </p>
 
@@ -712,12 +703,6 @@ let sectionIndex = 0;
               </div>
 
               <ul class="contact-meta">
-                {site.availability && (
-                  <li>
-                    <span class="contact-meta-dot" aria-hidden="true" />
-                    {site.availability}
-                  </li>
-                )}
                 <li>Usually replies within a day</li>
                 {site.contact.location && <li>{site.contact.location}</li>}
               </ul>
@@ -1429,66 +1414,6 @@ let sectionIndex = 0;
     margin-bottom: 1.5rem;
     font-size: var(--lp-text-sm);
     color: var(--text-muted);
-  }
-
-  .eyebrow-sep {
-    opacity: 0.4;
-  }
-
-  /* Availability badge: a neutral glass capsule with a live indicator on the
-     left and a call-to-action on the right. The whole thing links to contact. */
-  .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.3rem 0.85rem 0.3rem 0.35rem;
-    border-radius: 999px;
-    border: 1px solid var(--glass-border-strong);
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    color: var(--text-color);
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: -0.005em;
-    line-height: 1;
-    transition: border-color var(--transition-base), background var(--transition-base), transform var(--transition-base);
-  }
-
-  /* Indicator: a green core with a soft halo and an expanding ping ring. */
-  .status-dot {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
-    background: rgba(74, 222, 128, 0.14);
-    border: 1px solid rgba(74, 222, 128, 0.25);
-  }
-
-  .status-dot::before {
-    content: "";
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
-  }
-
-  .status-dot::after {
-    content: "";
-    position: absolute;
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    border: 1.5px solid var(--success);
-    animation: pulse-ring 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  }
-
-  .status-text {
-    padding-top: 0.05rem;
   }
 
   .headline {
@@ -2942,29 +2867,6 @@ let sectionIndex = 0;
     flex: none;
   }
 
-  .contact-meta li:has(.contact-meta-dot)::before {
-    display: none;
-  }
-
-  .contact-meta-dot {
-    position: relative;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--success);
-    flex: none;
-    margin-left: -0.1rem;
-  }
-
-  .contact-meta-dot::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 1px solid var(--success);
-    animation: pulse-ring 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  }
-
   /* Socials */
   .contact-socials {
     display: flex;
@@ -3526,11 +3428,6 @@ let sectionIndex = 0;
   @media (max-width: 640px) {
     :global(.landing-section) {
       margin: 4.5rem 0;
-    }
-
-    /* The eyebrow wraps here, which would strand the separator on its own line. */
-    .eyebrow-sep {
-      display: none;
     }
 
     .headline {

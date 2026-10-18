@@ -87,10 +87,6 @@
       {
         "q": "How do you handle iOS and Android parity?",
         "a": "One codebase, one release train. Both platforms ship together, with platform-specific work kept behind small, well-named abstractions. If a platform falls behind, I treat it as a process bug and fix the process."
-      },
-      {
-        "q": "Are you taking on new work?",
-        "a": "Not at the moment. I'm not taking on new roles or contracts right now, but you're still welcome to email if you want to say hello."
       }
     ],
     "sections": {
@@ -123,7 +119,7 @@
       },
       "contact": {
         "title": "Get in touch",
-        "description": "Not taking on new work right now, but always happy to talk shop. The fastest way to reach me is email."
+        "description": "The fastest way to reach me is email."
       }
     },
     "skills": [
